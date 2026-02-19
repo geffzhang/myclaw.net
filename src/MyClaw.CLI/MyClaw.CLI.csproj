@@ -6,6 +6,7 @@
     <ProjectReference Include="..\MyClaw.Gateway\MyClaw.Gateway.csproj" />
     <ProjectReference Include="..\MyClaw.Skills\MyClaw.Skills.csproj" />
     <ProjectReference Include="..\MyClaw.Memory\MyClaw.Memory.csproj" />
+    <ProjectReference Include="..\MyClaw.MCP\MyClaw.MCP.csproj" />
   </ItemGroup>
 
   <ItemGroup>
