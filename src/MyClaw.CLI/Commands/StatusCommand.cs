@@ -36,19 +36,18 @@ public class StatusCommand : Command
             table.AddRow("Model", cfg.Agent.Model);
             table.AddRow("Provider", string.IsNullOrEmpty(cfg.Provider.Type) ? "anthropic (default)" : cfg.Provider.Type);
 
-            // API Key (masked)
-            if (!string.IsNullOrEmpty(cfg.Provider.ApiKey) && cfg.Provider.ApiKey.Length > 8)
+            // API Key (masked) with source
+            var (apiKeyDisplay, keySource) = GetApiKeyDisplay(cfg);
+            table.AddRow("API Key", apiKeyDisplay);
+            if (!string.IsNullOrEmpty(keySource))
             {
-                var masked = cfg.Provider.ApiKey[..4] + "..." + cfg.Provider.ApiKey[^4..];
-                table.AddRow("API Key", masked);
+                table.AddRow("Key Source", $"[blue]{keySource}[/]");
             }
-            else if (!string.IsNullOrEmpty(cfg.Provider.ApiKey))
+
+            // Show Base URL if set
+            if (!string.IsNullOrEmpty(cfg.Provider.BaseUrl))
             {
-                table.AddRow("API Key", "set");
-            }
-            else
-            {
-                table.AddRow("API Key", "[red]not set[/]");
+                table.AddRow("Base URL", cfg.Provider.BaseUrl);
             }
 
             table.AddRow("Telegram", cfg.Channels.Telegram.Enabled ? "[green]enabled[/]" : "disabled");
@@ -85,5 +84,39 @@ public class StatusCommand : Command
         return string.IsNullOrEmpty(cfg.Skills.Dir)
             ? Path.Combine(cfg.Agent.Workspace, "skills")
             : cfg.Skills.Dir;
+    }
+
+    private static (string display, string source) GetApiKeyDisplay(MyClawConfiguration cfg)
+    {
+        if (string.IsNullOrEmpty(cfg.Provider.ApiKey))
+        {
+            return ("[red]not set[/]", "");
+        }
+
+        // Detect source from environment variables
+        string source;
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
+            source = "env: OPENAI_API_KEY";
+        else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY")))
+            source = "env: DEEPSEEK_API_KEY";
+        else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")))
+            source = "env: ANTHROPIC_API_KEY";
+        else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MYCLAW_API_KEY")))
+            source = "env: MYCLAW_API_KEY";
+        else
+            source = "config file";
+
+        // Mask the key
+        string display;
+        if (cfg.Provider.ApiKey.Length > 8)
+        {
+            display = cfg.Provider.ApiKey[..4] + "..." + cfg.Provider.ApiKey[^4..];
+        }
+        else
+        {
+            display = "set";
+        }
+
+        return (display, source);
     }
 }

@@ -25,6 +25,7 @@ public static class ModelFactory
         return providerType switch
         {
             "openai" => CreateOpenAIModel(config),
+            "deepseek" => CreateDeepSeekModel(config),
             "anthropic" => CreateAnthropicModel(config),
             _ => throw new NotSupportedException($"Provider type not supported: {config.Type}")
         };
@@ -45,6 +46,16 @@ public static class ModelFactory
             modelName: GetModelName(config, "gpt-4o"),
             apiKey: config.ApiKey,
             baseUrl: !string.IsNullOrEmpty(config.BaseUrl) ? config.BaseUrl : "https://api.openai.com/v1"
+        );
+    }
+
+    private static IModel CreateDeepSeekModel(ProviderConfig config)
+    {
+        // DeepSeek 使用 OpenAI 兼容的 API
+        return new OpenAIModel(
+            modelName: GetModelName(config, "deepseek-chat"),
+            apiKey: config.ApiKey,
+            baseUrl: !string.IsNullOrEmpty(config.BaseUrl) ? config.BaseUrl : "https://api.deepseek.com/v1"
         );
     }
 
