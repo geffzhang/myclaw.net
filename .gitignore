@@ -52,3 +52,28 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# MyClaw specific
+.env
+config.json
+workspace/MEMORY.md
+workspace/*.db
+workspace/*.db-*
+*.db
+*.db-shm
+*.db-wal
+
+# User data
+.myclaw/
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build artifacts
+dist/
+publish/

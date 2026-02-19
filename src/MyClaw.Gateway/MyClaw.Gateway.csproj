@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClaw.Core\MyClaw.Core.csproj" />
+    <ProjectReference Include="..\MyClaw.Agent\MyClaw.Agent.csproj" />
+    <ProjectReference Include="..\MyClaw.Channels\MyClaw.Channels.csproj" />
+    <ProjectReference Include="..\MyClaw.Cron\MyClaw.Cron.csproj" />
+    <ProjectReference Include="..\MyClaw.Heartbeat\MyClaw.Heartbeat.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

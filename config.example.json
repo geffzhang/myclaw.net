@@ -1,0 +1,55 @@
+{
+  "provider": {
+    "type": "anthropic",
+    "apiKey": "",
+    "baseUrl": ""
+  },
+  "agent": {
+    "model": "claude-sonnet-4-5-20250929",
+    "name": "MyClaw",
+    "workspace": "~/.myclaw/workspace"
+  },
+  "channels": {
+    "telegram": {
+      "enabled": false,
+      "token": "",
+      "allowFrom": []
+    },
+    "feishu": {
+      "enabled": false,
+      "appId": "",
+      "appSecret": "",
+      "verificationToken": "",
+      "port": 9876,
+      "allowFrom": []
+    },
+    "wecom": {
+      "enabled": false,
+      "token": "",
+      "encodingAESKey": "",
+      "receiveId": "",
+      "port": 9886,
+      "allowFrom": []
+    },
+    "whatsapp": {
+      "enabled": false,
+      "allowFrom": []
+    },
+    "webui": {
+      "enabled": true,
+      "port": 18790,
+      "allowFrom": []
+    }
+  },
+  "skills": {
+    "enabled": true,
+    "dir": ""
+  },
+  "memory": {
+    "databasePath": "~/.myclaw/myclaw.db"
+  },
+  "logging": {
+    "level": "Information",
+    "file": ""
+  }
+}

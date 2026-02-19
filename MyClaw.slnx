@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MyClaw.Agent/MyClaw.Agent.csproj" />
+    <Project Path="src/MyClaw.Channels/MyClaw.Channels.csproj" />
+    <Project Path="src/MyClaw.CLI/MyClaw.CLI.csproj" />
+    <Project Path="src/MyClaw.Core/MyClaw.Core.csproj" />
+    <Project Path="src/MyClaw.Cron/MyClaw.Cron.csproj" />
+    <Project Path="src/MyClaw.Gateway/MyClaw.Gateway.csproj" />
+    <Project Path="src/MyClaw.Heartbeat/MyClaw.Heartbeat.csproj" />
+    <Project Path="src/MyClaw.Memory/MyClaw.Memory.csproj" />
+    <Project Path="src/MyClaw.Skills/MyClaw.Skills.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyClaw.Core.Tests/MyClaw.Core.Tests.csproj" />
+    <Project Path="tests/MyClaw.Integration.Tests/MyClaw.Integration.Tests.csproj" />
+  </Folder>
+</Solution>
