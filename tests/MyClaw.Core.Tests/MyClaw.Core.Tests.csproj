@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyClaw.Core\MyClaw.Core.csproj" />
+    <ProjectReference Include="..\..\src\MyClaw.Memory\MyClaw.Memory.csproj" />
+    <ProjectReference Include="..\..\src\MyClaw.Agent\MyClaw.Agent.csproj" />
   </ItemGroup>
 
 </Project>

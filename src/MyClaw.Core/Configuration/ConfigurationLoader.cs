@@ -43,7 +43,7 @@ public static class ConfigurationLoader
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[config] warning: failed to load config file: {ex.Message}");
+                Console.WriteLine($"[config] 警告: 加载配置文件失败: {ex.Message}");
             }
         }
 

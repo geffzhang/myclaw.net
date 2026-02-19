@@ -61,7 +61,7 @@ public class DistillationEvaluator
             return new DistillationEvaluation
             {
                 ShouldDistill = true,
-                Reason = $"{status.EntryCount} entries (> {EntryThreshold})",
+                Reason = $"{status.EntryCount} 条目 (> {EntryThreshold})",
                 Urgency = DistillationUrgency.High
             };
         }
@@ -74,7 +74,7 @@ public class DistillationEvaluator
             return new DistillationEvaluation
             {
                 ShouldDistill = true,
-                Reason = $"log consuming {budgetPressure:P0} of budget",
+                Reason = $"日志占用 {budgetPressure:P0} 预算",
                 Urgency = DistillationUrgency.High
             };
         }
@@ -85,7 +85,7 @@ public class DistillationEvaluator
             return new DistillationEvaluation
             {
                 ShouldDistill = true,
-                Reason = $"{status.EntryCount} entries, oldest {status.OldestEntryAgeHours:F1}h ago",
+                Reason = $"{status.EntryCount} 条目, 最旧 {status.OldestEntryAgeHours:F1} 小时前",
                 Urgency = DistillationUrgency.Medium
             };
         }
@@ -96,7 +96,7 @@ public class DistillationEvaluator
             return new DistillationEvaluation
             {
                 ShouldDistill = true,
-                Reason = $"log size {status.LogBytes}B (> {SizeBytesThreshold}B)",
+                Reason = $"日志大小 {status.LogBytes}B (> {SizeBytesThreshold}B)",
                 Urgency = DistillationUrgency.Low
             };
         }
@@ -104,7 +104,7 @@ public class DistillationEvaluator
         return new DistillationEvaluation
         {
             ShouldDistill = false,
-            Reason = "ok",
+            Reason = "正常",
             Urgency = DistillationUrgency.Low
         };
     }

@@ -44,7 +44,7 @@ public class SkillManager
             }
         }
 
-        Console.WriteLine($"[skills] loaded {_skills.Count} skills from {_skillsDirectory}");
+        Console.WriteLine($"[skills] 从 {_skillsDirectory} 加载了 {_skills.Count} 个技能");
     }
 
     /// <summary>

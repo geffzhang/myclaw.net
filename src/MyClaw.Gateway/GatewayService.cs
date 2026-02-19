@@ -63,13 +63,13 @@ public class GatewayService
             if (string.IsNullOrEmpty(_config.Provider.ApiKey))
             {
                 throw new InvalidOperationException(
-                    "API key not set. Run 'myclaw onboard' or set MYCLAW_API_KEY / ANTHROPIC_API_KEY environment variable.");
+                    "API 密钥未设置。请运行 'myclaw onboard' 或设置 MYCLAW_API_KEY / ANTHROPIC_API_KEY 环境变量。");
             }
 
             // 初始化 Agent
             var model = ModelFactory.Create(_config.Provider);
             _agent = new MyClawAgent(_config, model, _memoryStore, _skillManager);
-            Console.WriteLine("[gateway] agent initialized");
+            Console.WriteLine("[gateway] Agent 已初始化");
 
             // 初始化渠道
             _channelManager.InitializeChannels(_config.Channels);
@@ -79,7 +79,7 @@ public class GatewayService
 
             // 启动所有渠道
             await _channelManager.StartAllAsync(token);
-            Console.WriteLine($"[gateway] channels started: {string.Join(", ", _channelManager.GetEnabledChannels())}");
+            Console.WriteLine($"[gateway] 渠道已启动: {string.Join(", ", _channelManager.GetEnabledChannels())}");
 
             // 启动 Cron 服务
             await _cronService.StartAsync(token);
@@ -92,11 +92,11 @@ public class GatewayService
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("[gateway] operation cancelled");
+            Console.WriteLine("[gateway] 操作已取消");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[gateway] error: {ex.Message}");
+            Console.WriteLine($"[gateway] 错误: {ex.Message}");
             throw;
         }
     }
@@ -106,7 +106,7 @@ public class GatewayService
     /// </summary>
     public async Task StopAsync()
     {
-        Console.WriteLine("[gateway] shutting down...");
+        Console.WriteLine("[gateway] 正在关闭...");
         
         _cts?.Cancel();
         
@@ -115,7 +115,7 @@ public class GatewayService
         await _channelManager.StopAllAsync();
         _messageBus.Close();
         
-        Console.WriteLine("[gateway] shutdown complete");
+        Console.WriteLine("[gateway] 关闭完成");
     }
 
     /// <summary>
@@ -173,14 +173,14 @@ public class GatewayService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[gateway] error processing message: {ex.Message}");
+                Console.WriteLine($"[gateway] 消息处理错误: {ex.Message}");
                 
                 // 发送错误回复
                 await _messageBus.PublishOutboundAsync(new OutboundMessage
                 {
                     Channel = message.Channel,
                     ChatID = message.ChatID,
-                    Content = "Sorry, I encountered an error processing your message."
+                    Content = "抱歉，处理您的消息时遇到错误。"
                 }, ct);
             }
         }
@@ -193,7 +193,7 @@ public class GatewayService
     {
         if (_agent == null)
         {
-            return "Error: Agent not initialized";
+            return "错误: Agent 未初始化";
         }
 
         return await _agent.ChatAsync(prompt, sessionId);

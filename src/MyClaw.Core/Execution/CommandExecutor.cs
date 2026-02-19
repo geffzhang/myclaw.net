@@ -73,7 +73,7 @@ public class CommandExecutor
         {
             return new CommandResult
             {
-                Output = $"Security Error: {validation.ErrorMessage}",
+                Output = $"安全错误: {validation.ErrorMessage}",
                 ExitCode = -1
             };
         }
@@ -117,7 +117,7 @@ public class CommandExecutor
                 try { process.Kill(); } catch { }
                 return new CommandResult
                 {
-                    Output = "Error: Command timed out (10s limit)",
+                    Output = "错误: 命令超时 (10秒限制)",
                     ExitCode = -1
                 };
             }
@@ -130,7 +130,7 @@ public class CommandExecutor
             if (output.Length > maxOutput)
             {
                 output = output.Substring(0, maxOutput) +
-                    "\n... [output truncated, exceeded 1MB limit]";
+                    "\n... [输出已截断，超过 1MB 限制]";
             }
 
             return new CommandResult
@@ -143,7 +143,7 @@ public class CommandExecutor
         {
             return new CommandResult
             {
-                Output = $"Execution Error: {ex.Message}",
+                Output = $"执行错误: {ex.Message}",
                 ExitCode = -1
             };
         }
@@ -156,7 +156,7 @@ public class CommandExecutor
     {
         if (string.IsNullOrWhiteSpace(command))
         {
-            return (false, "Command is empty");
+            return (false, "命令为空");
         }
 
         // 提取第一个token（主命令）
@@ -170,21 +170,21 @@ public class CommandExecutor
             var cmdName = Path.GetFileName(firstToken);
             if (!AllowedCommands.Contains(cmdName))
             {
-                return (false, $"Command '{cmdName}' is not in the allowed whitelist");
+                return (false, $"命令 '{cmdName}' 不在允许的白名单中");
             }
         }
         else
         {
             if (!AllowedCommands.Contains(firstToken))
             {
-                return (false, $"Command '{firstToken}' is not in the allowed whitelist");
+                return (false, $"命令 '{firstToken}' 不在允许的白名单中");
             }
         }
 
         // 检查危险字符
         if (BlockedCommands.Any(bc => command.Contains(bc)))
         {
-            return (false, "Command contains potentially dangerous characters/patterns");
+            return (false, "命令包含潜在危险字符/模式");
         }
 
         return (true, string.Empty);

@@ -45,7 +45,7 @@ public static class SkillLoader
                 // 检查重复名称
                 if (seen.Contains(skill.Name))
                 {
-                    Console.WriteLine($"[skills] warning: duplicate skill name '{skill.Name}' in {skillMdPath}");
+                    Console.WriteLine($"[skills] 警告: 重复的技能名称 '{skill.Name}' 在 {skillMdPath}");
                     continue;
                 }
 
@@ -54,7 +54,7 @@ public static class SkillLoader
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[skills] warning: failed to load skill from {skillMdPath}: {ex.Message}");
+                Console.WriteLine($"[skills] 警告: 从 {skillMdPath} 加载技能失败: {ex.Message}");
             }
         }
 
@@ -86,7 +86,7 @@ public static class SkillLoader
         var match = FrontmatterRegex.Match(content);
         if (!match.Success)
         {
-            Console.WriteLine($"[skills] warning: missing YAML frontmatter in {sourcePath}");
+            Console.WriteLine($"[skills] 警告: {sourcePath} 缺少 YAML 前置数据");
             return null;
         }
 
@@ -97,7 +97,7 @@ public static class SkillLoader
         var metadata = ParseYaml(frontmatter);
         if (string.IsNullOrWhiteSpace(metadata.Name))
         {
-            Console.WriteLine($"[skills] warning: missing name in {sourcePath}");
+            Console.WriteLine($"[skills] 警告: {sourcePath} 缺少名称");
             return null;
         }
 

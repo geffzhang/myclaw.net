@@ -109,7 +109,7 @@ public class ContextCompiler
                 if (remaining > 200)
                 {
                     var truncated = section.Content.Substring(0, remaining - 50) +
-                        $"\n\n... [{section.Name}: truncated, {sectionChars - remaining} chars omitted]\n";
+                        $"\n\n... [{section.Name}: 已截断，省略 {sectionChars - remaining} 字符]\n";
                     output.Append(truncated);
                     totalChars += truncated.Length;
                     truncatedSections.Add(section.Name);

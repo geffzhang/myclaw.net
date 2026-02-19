@@ -13,9 +13,9 @@ class Program
     {
         try
         {
-            var rootCommand = new RootCommand("myclaw - Personal AI assistant");
+            var rootCommand = new RootCommand("myclaw - 个人 AI 助手");
 
-            // Add subcommands
+            // 添加子命令
             rootCommand.AddCommand(new AgentCommand());
             rootCommand.AddCommand(new GatewayCommand());
             rootCommand.AddCommand(new OnboardCommand());
@@ -26,7 +26,7 @@ class Program
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+            AnsiConsole.MarkupLine($"[red]错误: {ex.Message}[/]");
             return 1;
         }
     }

@@ -12,7 +12,7 @@ namespace MyClaw.CLI.Commands;
 /// </summary>
 public class StatusCommand : Command
 {
-    public StatusCommand() : base("status", "Show myclaw status")
+    public StatusCommand() : base("status", "显示 myclaw 状态")
     {
         this.SetHandler(() =>
         {
@@ -23,43 +23,43 @@ public class StatusCommand : Command
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]Config: error ({ex.Message})[/]");
+                AnsiConsole.MarkupLine($"[red]配置: 错误 ({ex.Message})[/]");
                 return;
             }
 
             var table = new Table();
-            table.AddColumn("Property");
-            table.AddColumn("Value");
+            table.AddColumn("属性");
+            table.AddColumn("值");
 
-            table.AddRow("Config", ConfigurationLoader.ConfigPath);
-            table.AddRow("Workspace", cfg.Agent.Workspace);
-            table.AddRow("Model", cfg.Agent.Model);
-            table.AddRow("Provider", string.IsNullOrEmpty(cfg.Provider.Type) ? "anthropic (default)" : cfg.Provider.Type);
+            table.AddRow("配置文件", ConfigurationLoader.ConfigPath);
+            table.AddRow("工作区", cfg.Agent.Workspace);
+            table.AddRow("模型", cfg.Agent.Model);
+            table.AddRow("提供商", string.IsNullOrEmpty(cfg.Provider.Type) ? "anthropic (默认)" : cfg.Provider.Type);
 
-            // API Key (masked) with source
+            // API 密钥（脱敏）及来源
             var (apiKeyDisplay, keySource) = GetApiKeyDisplay(cfg);
-            table.AddRow("API Key", apiKeyDisplay);
+            table.AddRow("API 密钥", apiKeyDisplay);
             if (!string.IsNullOrEmpty(keySource))
             {
-                table.AddRow("Key Source", $"[blue]{keySource}[/]");
+                table.AddRow("密钥来源", $"[blue]{keySource}[/]");
             }
 
-            // Show Base URL if set
+            // 显示 Base URL（如果已设置）
             if (!string.IsNullOrEmpty(cfg.Provider.BaseUrl))
             {
                 table.AddRow("Base URL", cfg.Provider.BaseUrl);
             }
 
-            table.AddRow("Telegram", cfg.Channels.Telegram.Enabled ? "[green]enabled[/]" : "disabled");
-            table.AddRow("Feishu", cfg.Channels.Feishu.Enabled ? "[green]enabled[/]" : "disabled");
-            table.AddRow("WeCom", cfg.Channels.WeCom.Enabled ? "[green]enabled[/]" : "disabled");
-            table.AddRow("Uno", cfg.Channels.Uno.Enabled ? $"[green]enabled[/] ({cfg.Channels.Uno.Mode})" : "disabled");
-            table.AddRow("Skills", cfg.Skills.Enabled ? $"[green]enabled[/] (dir: {GetSkillsDir(cfg)})" : "disabled");
+            table.AddRow("Telegram", cfg.Channels.Telegram.Enabled ? "[green]已启用[/]" : "已禁用");
+            table.AddRow("飞书", cfg.Channels.Feishu.Enabled ? "[green]已启用[/]" : "已禁用");
+            table.AddRow("企业微信", cfg.Channels.WeCom.Enabled ? "[green]已启用[/]" : "已禁用");
+            table.AddRow("Uno", cfg.Channels.Uno.Enabled ? $"[green]已启用[/] ({cfg.Channels.Uno.Mode})" : "已禁用");
+            table.AddRow("技能", cfg.Skills.Enabled ? $"[green]已启用[/] (目录: {GetSkillsDir(cfg)})" : "已禁用");
 
-            // Check workspace
+            // 检查工作区
             if (!Directory.Exists(cfg.Agent.Workspace))
             {
-                table.AddRow("Workspace", "[red]not found (run 'myclaw onboard')[/]");
+                table.AddRow("工作区", "[red]未找到 (请运行 'myclaw onboard')[/]");
             }
             else
             {
@@ -67,11 +67,11 @@ public class StatusCommand : Command
                 if (File.Exists(memoryPath))
                 {
                     var content = File.ReadAllText(memoryPath);
-                    table.AddRow("Memory", $"{content.Length} bytes");
+                    table.AddRow("记忆", $"{content.Length} 字节");
                 }
                 else
                 {
-                    table.AddRow("Memory", "empty");
+                    table.AddRow("记忆", "空");
                 }
             }
 
@@ -90,23 +90,23 @@ public class StatusCommand : Command
     {
         if (string.IsNullOrEmpty(cfg.Provider.ApiKey))
         {
-            return ("[red]not set[/]", "");
+            return ("[red]未设置[/]", "");
         }
 
-        // Detect source from environment variables
+        // 从环境变量检测来源
         string source;
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
-            source = "env: OPENAI_API_KEY";
+            source = "环境变量: OPENAI_API_KEY";
         else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY")))
-            source = "env: DEEPSEEK_API_KEY";
+            source = "环境变量: DEEPSEEK_API_KEY";
         else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")))
-            source = "env: ANTHROPIC_API_KEY";
+            source = "环境变量: ANTHROPIC_API_KEY";
         else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MYCLAW_API_KEY")))
-            source = "env: MYCLAW_API_KEY";
+            source = "环境变量: MYCLAW_API_KEY";
         else
-            source = "config file";
+            source = "配置文件";
 
-        // Mask the key
+        // 脱敏密钥
         string display;
         if (cfg.Provider.ApiKey.Length > 8)
         {
@@ -114,7 +114,7 @@ public class StatusCommand : Command
         }
         else
         {
-            display = "set";
+            display = "已设置";
         }
 
         return (display, source);

@@ -14,12 +14,12 @@ namespace MyClaw.CLI.Commands;
 /// </summary>
 public class GatewayCommand : Command
 {
-    public GatewayCommand() : base("gateway", "Start the full gateway (channels + cron + heartbeat + mcp)")
+    public GatewayCommand() : base("gateway", "启动完整网关（渠道 + 定时任务 + 心跳 + MCP）")
     {
         // MCP 端口参数，默认 2334
         var mcpPortOption = new Option<int>(
             aliases: new[] { "--mcpport" },
-            description: "MCP service port (default: 2334)",
+            description: "MCP 服务端口（默认: 2334）",
             getDefaultValue: () => 2334);
 
         AddOption(mcpPortOption);
@@ -30,54 +30,54 @@ public class GatewayCommand : Command
 
             if (string.IsNullOrEmpty(cfg.Provider.ApiKey))
             {
-                AnsiConsole.MarkupLine("[red]API key not set. Run 'myclaw onboard' or set MYCLAW_API_KEY / ANTHROPIC_API_KEY[/]");
+                AnsiConsole.MarkupLine("[red]API 密钥未设置。请运行 'myclaw onboard' 或设置 MYCLAW_API_KEY / ANTHROPIC_API_KEY[/]");
                 return;
             }
 
             var cts = new CancellationTokenSource();
             
-            // Handle Ctrl+C
+            // 处理 Ctrl+C
             Console.CancelKeyPress += (_, e) =>
             {
                 e.Cancel = true;
                 cts.Cancel();
             };
 
-            // Start MCP Service
-            AnsiConsole.MarkupLine($"[blue]Starting MCP service on port {mcpPort}...[/]");
+            // 启动 MCP 服务
+            AnsiConsole.MarkupLine($"[blue]正在端口 {mcpPort} 启动 MCP 服务...[/]");
             var mcpServer = new McpServer(mcpPort);
             await mcpServer.StartAsync();
-            AnsiConsole.MarkupLine($"[green]✓ MCP service started on http://localhost:{mcpPort}[/]");
+            AnsiConsole.MarkupLine($"[green]✓ MCP 服务已启动 http://localhost:{mcpPort}[/]");
 
-            // Start Gateway
-            AnsiConsole.MarkupLine($"[blue]Starting gateway on {cfg.Gateway.Host}:{cfg.Gateway.Port}...[/]");
+            // 启动网关
+            AnsiConsole.MarkupLine($"[blue]正在 {cfg.Gateway.Host}:{cfg.Gateway.Port} 启动网关...[/]");
             
             try
             {
                 var gateway = new GatewayService(cfg);
                 _ = Task.Run(() => gateway.StartAsync(cts.Token), cts.Token);
                 
-                AnsiConsole.MarkupLine($"[green]✓ Gateway started on {cfg.Gateway.Host}:{cfg.Gateway.Port}[/]");
+                AnsiConsole.MarkupLine($"[green]✓ 网关已启动 {cfg.Gateway.Host}:{cfg.Gateway.Port}[/]");
                 AnsiConsole.MarkupLine("");
-                AnsiConsole.MarkupLine("[blue]Services running:[/]");
-                AnsiConsole.MarkupLine($"  • MCP Server:   http://localhost:{mcpPort}");
-                AnsiConsole.MarkupLine($"  • Gateway:      {cfg.Gateway.Host}:{cfg.Gateway.Port}");
-                AnsiConsole.MarkupLine($"  • WebUI:        http://localhost:{cfg.Channels?.WebUI?.Port ?? 8080} (if enabled)");
+                AnsiConsole.MarkupLine("[blue]运行中的服务:[/]");
+                AnsiConsole.MarkupLine($"  • MCP 服务器:   http://localhost:{mcpPort}");
+                AnsiConsole.MarkupLine($"  • 网关:         {cfg.Gateway.Host}:{cfg.Gateway.Port}");
+                AnsiConsole.MarkupLine($"  • WebUI:        http://localhost:{cfg.Channels?.WebUI?.Port ?? 8080} (如已启用)");
                 AnsiConsole.MarkupLine("");
-                AnsiConsole.MarkupLine("[yellow]Press Ctrl+C to stop all services.[/]");
+                AnsiConsole.MarkupLine("[yellow]按 Ctrl+C 停止所有服务[/]");
                 
-                // Wait for shutdown signal
+                // 等待关闭信号
                 await Task.Delay(-1, cts.Token);
             }
             catch (OperationCanceledException)
             {
-                AnsiConsole.MarkupLine("\n[yellow]Shutting down services...[/]");
+                AnsiConsole.MarkupLine("\n[yellow]正在关闭服务...[/]");
                 await mcpServer.StopAsync();
-                AnsiConsole.MarkupLine("[green]✓ Services stopped.[/]");
+                AnsiConsole.MarkupLine("[green]✓ 服务已停止[/]");
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]Gateway error: {ex.Message}[/]");
+                AnsiConsole.MarkupLine($"[red]网关错误: {ex.Message}[/]");
                 await mcpServer.StopAsync();
             }
         }, mcpPortOption);

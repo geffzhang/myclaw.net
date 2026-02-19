@@ -34,7 +34,7 @@ public class McpServer
     {
         _cts = new CancellationTokenSource();
 
-        // Initialize components
+        // 初始化组件
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var workspace = Path.Combine(home, ".myclaw", "workspace");
         Directory.CreateDirectory(workspace);
@@ -48,7 +48,7 @@ public class McpServer
 
         await _entityStore.LoadAsync();
 
-        // Start HTTP server
+        // 启动 HTTP 服务器
         _listener = new HttpListener();
         _listener.Prefixes.Add($"http://localhost:{_port}/");
         _listener.Start();
@@ -80,7 +80,7 @@ public class McpServer
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[MCP] Accept error: {ex.Message}");
+                Console.WriteLine($"[MCP] 接受连接错误: {ex.Message}");
             }
         }
     }
@@ -134,13 +134,13 @@ public class McpServer
                     break;
                 default:
                     response.StatusCode = 404;
-                    await WriteJsonAsync(response, new { error = "Not found" });
+                    await WriteJsonAsync(response, new { error = "未找到" });
                     break;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[MCP] Error: {ex.Message}");
+                Console.WriteLine($"[MCP] 错误: {ex.Message}");
             response.StatusCode = 500;
             await WriteJsonAsync(response, new { error = ex.Message });
         }
@@ -245,7 +245,7 @@ public class McpServer
             }
         };
 
-        // Add skill tools
+        // 添加技能工具
         foreach (var skill in _skillManager.LoadedSkills)
         {
             tools.Add(new
@@ -267,7 +267,7 @@ public class McpServer
         if (call == null)
         {
             response.StatusCode = 400;
-            await WriteJsonAsync(response, new { error = "Invalid request" });
+            await WriteJsonAsync(response, new { error = "无效请求" });
             return;
         }
 
@@ -290,12 +290,12 @@ public class McpServer
                 "miniclaw_entity" => await ToolEntityAsync(args),
                 "miniclaw_exec" => await ToolExecAsync(args),
                 "miniclaw_status" => ToolStatus(),
-                _ => name.StartsWith("skill_") ? await ToolSkillAsync(name, args) : $"Unknown tool: {name}"
+                _ => name.StartsWith("skill_") ? await ToolSkillAsync(name, args) : $"未知工具: {name}"
             };
         }
         catch (Exception ex)
         {
-            return $"Error: {ex.Message}";
+            return $"错误: {ex.Message}";
         }
     }
 
@@ -307,21 +307,21 @@ public class McpServer
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var path = Path.Combine(home, ".myclaw", "workspace", filename);
 
-        // Backup
+        // 备份
         if (File.Exists(path))
         {
             File.Copy(path, path + ".bak", overwrite: true);
         }
 
         await File.WriteAllTextAsync(path, content);
-        return $"Updated {filename}.";
+        return $"已更新 {filename}。";
     }
 
     private string ToolNote(Dictionary<string, object> args)
     {
         var text = args["text"].ToString()!;
         _memoryStore.AppendToday(text);
-        return "Logged to today's memory.";
+        return "已记录到今日日志。";
     }
 
     private string ToolRead(Dictionary<string, object> args)
@@ -330,7 +330,7 @@ public class McpServer
 
         var parts = new List<string>();
 
-        // Core files
+        // 核心文件
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var workspace = Path.Combine(home, ".myclaw", "workspace");
 
@@ -343,14 +343,14 @@ public class McpServer
             }
         }
 
-        // Memory
+        // 记忆
         var memory = _memoryStore.ReadLongTerm();
         if (!string.IsNullOrEmpty(memory))
         {
             parts.Add($"## MEMORY.md\n{memory}");
         }
 
-        // Today
+        // 今日
         var today = _memoryStore.ReadToday();
         if (!string.IsNullOrEmpty(today))
         {
@@ -362,7 +362,7 @@ public class McpServer
 
     private string ToolArchive()
     {
-        return _memoryStore.ArchiveToday() ? "Archived today's log." : "No log to archive.";
+        return _memoryStore.ArchiveToday() ? "已归档今日日志。" : "没有可归档的日志。";
     }
 
     private async Task<string> ToolEntityAsync(Dictionary<string, object> args)
@@ -376,7 +376,7 @@ public class McpServer
             "link" => await EntityLinkAsync(args),
             "query" => await EntityQueryAsync(args),
             "list" => await EntityListAsync(args),
-            _ => "Unknown action"
+            _ => "未知操作"
         };
     }
 
@@ -407,7 +407,7 @@ public class McpServer
     {
         var name = args["name"].ToString()!;
         var removed = await _entityStore.RemoveAsync(name);
-        return removed ? $"Removed '{name}'." : $"Entity '{name}' not found.";
+        return removed ? $"已删除 '{name}'。" : $"实体 '{name}' 不存在。";
     }
 
     private async Task<string> EntityLinkAsync(Dictionary<string, object> args)
@@ -415,14 +415,14 @@ public class McpServer
         var name = args["name"].ToString()!;
         var relation = args["relation"].ToString()!;
         var linked = await _entityStore.LinkAsync(name, relation);
-        return linked ? $"Linked '{name}' → '{relation}'." : $"Entity '{name}' not found.";
+        return linked ? $"已关联 '{name}' → '{relation}'。" : $"实体 '{name}' 不存在。";
     }
 
     private async Task<string> EntityQueryAsync(Dictionary<string, object> args)
     {
         var name = args["name"].ToString()!;
         var entity = await _entityStore.QueryAsync(name);
-        if (entity == null) return $"Entity '{name}' not found.";
+        if (entity == null)         return $"实体 '{name}' 不存在。";
 
         var attrs = string.Join(", ", entity.Attributes.Select(a => $"{a.Key}: {a.Value}"));
         return $"**{entity.Name}** ({entity.Type})\nMentions: {entity.MentionCount}\nAttributes: {attrs}\nRelations: {string.Join("; ", entity.Relations)}";
@@ -437,7 +437,7 @@ public class McpServer
         }
 
         var entities = await _entityStore.ListAsync(filter);
-        if (entities.Count == 0) return "No entities found.";
+        if (entities.Count == 0) return "没有找到实体。";
 
         var lines = entities.Select(e => $"- **{e.Name}** ({e.Type}, {e.MentionCount}x) - last: {e.LastMentioned}");
         return $"## Entities ({entities.Count})\n{string.Join("\n", lines)}";
@@ -447,7 +447,7 @@ public class McpServer
     {
         var command = args["command"].ToString()!;
         var result = await _commandExecutor.ExecuteAsync(command);
-        return result.IsSuccess ? result.Output : $"Error (exit {result.ExitCode}): {result.Output}";
+        return result.IsSuccess ? result.Output : $"错误 (退出码 {result.ExitCode}): {result.Output}";
     }
 
     private string ToolStatus()
@@ -470,7 +470,7 @@ public class McpServer
     {
         var skillName = name.Replace("skill_", "");
         var skill = _skillManager.GetSkill(skillName);
-        if (skill == null) return $"Skill '{skillName}' not found.";
+        if (skill == null) return $"技能 '{skillName}' 不存在。";
 
         var content = skill.GetSystemPrompt();
         return $"## Skill: {skill.Name}\n\n{content}\n\nInput: {JsonSerializer.Serialize(args)}";
@@ -494,7 +494,7 @@ public class McpServer
         {
             "myclaw://context" => ToolRead(new Dictionary<string, object>()),
             "myclaw://skills" => string.Join("\n", _skillManager.LoadedSkills.Select(s => $"- {s.Name}: {s.Description}")),
-            _ => "Unknown resource"
+            _ => "未知资源"
         };
 
         await WriteJsonAsync(response, new { contents = new[] { new { uri, mimeType = "text/markdown", text = content } } });
@@ -504,9 +504,9 @@ public class McpServer
     {
         var prompts = new List<object>
         {
-            new { name = "miniclaw_wakeup", description = "Wake up and load context" },
-            new { name = "miniclaw_growup", description = "Memory distillation" },
-            new { name = "miniclaw_briefing", description = "Daily briefing" }
+            new { name = "miniclaw_wakeup", description = "唤醒并加载上下文" },
+            new { name = "miniclaw_growup", description = "记忆蒸馏" },
+            new { name = "miniclaw_briefing", description = "每日简报" }
         };
 
         await WriteJsonAsync(response, new { prompts });
@@ -517,9 +517,9 @@ public class McpServer
         var name = request.QueryString["name"] ?? "";
         var messages = name switch
         {
-            "miniclaw_wakeup" => new[] { new { role = "user", content = new { type = "text", text = "SYSTEM: Waking up... Call tool `miniclaw_read` to load context." } } },
-            "miniclaw_growup" => new[] { new { role = "user", content = new { type = "text", text = "SYSTEM: Initiating memory distillation. Review today's log and update MEMORY.md." } } },
-            "miniclaw_briefing" => new[] { new { role = "user", content = new { type = "text", text = $"Daily briefing:\n{ToolStatus()}" } } },
+            "miniclaw_wakeup" => new[] { new { role = "user", content = new { type = "text", text = "系统: 正在唤醒... 调用工具 `miniclaw_read` 加载上下文。" } } },
+            "miniclaw_growup" => new[] { new { role = "user", content = new { type = "text", text = "系统: 正在进行记忆蒸馏。检查今日日志并更新 MEMORY.md。" } } },
+            "miniclaw_briefing" => new[] { new { role = "user", content = new { type = "text", text = $"每日简报:\n{ToolStatus()}" } } },
             _ => Array.Empty<object>()
         };
 
@@ -535,7 +535,7 @@ public class McpServer
         var data = encoder.GetBytes("data: {\"type\":\"connected\"}\n\n");
         await response.OutputStream.WriteAsync(data);
 
-        // Keep connection open for 30 seconds
+        // 保持连接 30 秒
         await Task.Delay(30000);
     }
 

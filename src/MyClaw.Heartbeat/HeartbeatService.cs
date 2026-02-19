@@ -28,7 +28,7 @@ public class HeartbeatService
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var token = _cts.Token;
 
-        Console.WriteLine($"[heartbeat] started, interval={_interval}");
+        Console.WriteLine($"[heartbeat] 已启动, 间隔={_interval}");
 
         using var timer = new PeriodicTimer(_interval);
 
@@ -41,7 +41,7 @@ public class HeartbeatService
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("[heartbeat] stopped");
+            Console.WriteLine("[heartbeat] 已停止");
         }
     }
 
@@ -75,11 +75,11 @@ public class HeartbeatService
                 return;
             }
 
-            Console.WriteLine($"[heartbeat] triggering with prompt ({content.Length} chars)");
+            Console.WriteLine($"[heartbeat] 触发心跳，提示词 ({content.Length} 字符)");
 
             if (OnHeartbeat == null)
             {
-                Console.WriteLine("[heartbeat] no handler set");
+                Console.WriteLine("[heartbeat] 未设置处理程序");
                 return;
             }
 
@@ -87,16 +87,16 @@ public class HeartbeatService
 
             if (result.Contains("HEARTBEAT_OK"))
             {
-                Console.WriteLine("[heartbeat] nothing to do");
+                Console.WriteLine("[heartbeat] 无需执行");
             }
             else
             {
-                Console.WriteLine($"[heartbeat] result: {Truncate(result, 200)}");
+                Console.WriteLine($"[heartbeat] 结果: {Truncate(result, 200)}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[heartbeat] error: {ex.Message}");
+            Console.WriteLine($"[heartbeat] 错误: {ex.Message}");
         }
     }
 

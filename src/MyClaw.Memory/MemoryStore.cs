@@ -141,7 +141,7 @@ public class MemoryStore
         var longTerm = ReadLongTerm();
         if (!string.IsNullOrWhiteSpace(longTerm))
         {
-            sb.AppendLine("# Long-term Memory");
+            sb.AppendLine("# 长期记忆");
             sb.AppendLine(longTerm);
             sb.AppendLine();
         }
@@ -149,7 +149,7 @@ public class MemoryStore
         var recent = GetRecentMemories(7);
         if (!string.IsNullOrWhiteSpace(recent))
         {
-            sb.AppendLine("# Recent Journal");
+            sb.AppendLine("# 最近日志");
             sb.AppendLine(recent);
         }
 

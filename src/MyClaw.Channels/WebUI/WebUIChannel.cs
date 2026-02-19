@@ -35,7 +35,7 @@ public class WebUIChannel : ChannelBase
         _listener.Prefixes.Add($"http://{_config.Host}:{_config.Port}/");
         _listener.Start();
 
-        Console.WriteLine($"[webui] listening on http://{_config.Host}:{_config.Port}");
+        Console.WriteLine($"[webui] 监听 http://{_config.Host}:{_config.Port}");
 
         _ = Task.Run(() => AcceptLoopAsync(_cts.Token), _cts.Token);
         
@@ -93,7 +93,7 @@ public class WebUIChannel : ChannelBase
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[webui] send to client failed: {ex.Message}");
+                Console.WriteLine($"[webui] 发送到客户端失败: {ex.Message}");
             }
         }
     }
@@ -113,7 +113,7 @@ public class WebUIChannel : ChannelBase
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[webui] accept error: {ex.Message}");
+                Console.WriteLine($"[webui] 接受连接错误: {ex.Message}");
             }
         }
     }
@@ -161,7 +161,7 @@ public class WebUIChannel : ChannelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[webui] request error: {ex.Message}");
+            Console.WriteLine($"[webui] 请求错误: {ex.Message}");
             try
             {
                 response.StatusCode = 500;
@@ -190,7 +190,7 @@ public class WebUIChannel : ChannelBase
             _clients.Add(client);
         }
 
-        Console.WriteLine($"[webui] websocket client connected, total: {_clients.Count}");
+        Console.WriteLine($"[webui] WebSocket 客户端已连接，总数: {_clients.Count}");
 
         try
         {
@@ -213,7 +213,7 @@ public class WebUIChannel : ChannelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[webui] websocket error: {ex.Message}");
+            Console.WriteLine($"[webui] WebSocket 错误: {ex.Message}");
         }
         finally
         {
@@ -221,8 +221,8 @@ public class WebUIChannel : ChannelBase
             {
                 _clients.Remove(client);
             }
-            try { socket.CloseAsync(System.Net.WebSockets.WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None).Wait(); } catch { }
-            Console.WriteLine($"[webui] websocket client disconnected, total: {_clients.Count}");
+            try { socket.CloseAsync(System.Net.WebSockets.WebSocketCloseStatus.NormalClosure, "关闭中", CancellationToken.None).Wait(); } catch { }
+            Console.WriteLine($"[webui] WebSocket 客户端已断开，总数: {_clients.Count}");
         }
     }
 
@@ -246,7 +246,7 @@ public class WebUIChannel : ChannelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[webui] parse message error: {ex.Message}");
+            Console.WriteLine($"[webui] 解析消息错误: {ex.Message}");
         }
     }
 
@@ -288,7 +288,7 @@ public class WebUIChannel : ChannelBase
             Timestamp = DateTime.UtcNow
         });
 
-        var response = JsonSerializer.Serialize(new { success = true, message = "Message received" });
+        var response = JsonSerializer.Serialize(new { success = true, message = "消息已接收" });
         var bytes = Encoding.UTF8.GetBytes(response);
         
         context.Response.ContentType = "application/json";

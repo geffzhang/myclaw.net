@@ -58,7 +58,7 @@ public class MyClawAgent
             .Build();
 
         var response = await _agent.Call(msg).FirstAsync();
-        return response.GetTextContent() ?? "No response";
+        return response.GetTextContent() ?? "无响应";
     }
 
     /// <summary>

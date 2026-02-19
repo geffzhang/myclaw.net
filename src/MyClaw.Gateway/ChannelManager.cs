@@ -36,7 +36,7 @@ public class ChannelManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[channel-mgr] send to {channel.Name} failed: {ex.Message}");
+                Console.WriteLine($"[channel-mgr] 发送到 {channel.Name} 失败: {ex.Message}");
             }
         });
     }
@@ -69,14 +69,14 @@ public class ChannelManager
 
     private async Task StartChannelAsync(IChannel channel, CancellationToken ct)
     {
-        Console.WriteLine($"[channel-mgr] starting {channel.Name}");
+        Console.WriteLine($"[channel-mgr] 正在启动 {channel.Name}");
         try
         {
             await channel.StartAsync(ct);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[channel-mgr] failed to start {channel.Name}: {ex.Message}");
+            Console.WriteLine($"[channel-mgr] 启动 {channel.Name} 失败: {ex.Message}");
             throw;
         }
     }
@@ -88,14 +88,14 @@ public class ChannelManager
     {
         foreach (var channel in _channels.Values)
         {
-            Console.WriteLine($"[channel-mgr] stopping {channel.Name}");
+            Console.WriteLine($"[channel-mgr] 正在停止 {channel.Name}");
             try
             {
                 await channel.StopAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[channel-mgr] error stopping {channel.Name}: {ex.Message}");
+                Console.WriteLine($"[channel-mgr] 停止 {channel.Name} 错误: {ex.Message}");
             }
         }
     }

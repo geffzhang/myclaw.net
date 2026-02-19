@@ -15,11 +15,11 @@ namespace MyClaw.CLI.Commands;
 /// </summary>
 public class AgentCommand : Command
 {
-    public AgentCommand() : base("agent", "Run agent in single message or REPL mode")
+    public AgentCommand() : base("agent", "在单消息或 REPL 模式下运行 Agent")
     {
         var messageOption = new Option<string?>(
             aliases: new[] { "-m", "--message" },
-            description: "Single message to send to agent");
+            description: "发送给 Agent 的单条消息");
 
         AddOption(messageOption);
 
@@ -29,7 +29,7 @@ public class AgentCommand : Command
             
             if (string.IsNullOrEmpty(cfg.Provider.ApiKey))
             {
-                AnsiConsole.MarkupLine("[red]API key not set. Run 'myclaw onboard' or set MYCLAW_API_KEY / ANTHROPIC_API_KEY[/]");
+                AnsiConsole.MarkupLine("[red]API 密钥未设置。请运行 'myclaw onboard' 或设置 MYCLAW_API_KEY / ANTHROPIC_API_KEY[/]");
                 return;
             }
 
@@ -44,12 +44,12 @@ public class AgentCommand : Command
 
             if (!string.IsNullOrEmpty(message))
             {
-                // Single message mode
+                // 单消息模式
                 await RunSingleMessageAsync(agent, message);
             }
             else
             {
-                // REPL mode
+                // REPL 模式
                 await RunReplAsync(agent);
             }
         }, messageOption);
@@ -59,17 +59,17 @@ public class AgentCommand : Command
     {
         string response = "";
         await AnsiConsole.Status()
-            .StartAsync("Thinking...", async ctx =>
+            .StartAsync("思考中...", async ctx =>
             {
                 response = await agent.ChatAsync(message);
             });
 
-        AnsiConsole.MarkupLine($"[green]Assistant:[/] {response}");
+            AnsiConsole.MarkupLine($"[green]助手:[/] {response}");
     }
 
     private async Task RunReplAsync(MyClawAgent agent)
     {
-        AnsiConsole.MarkupLine("[blue]myclaw agent (type 'exit' to quit)[/]");
+        AnsiConsole.MarkupLine("[blue]myclaw agent (输入 'exit' 退出)[/]");
         
         while (true)
         {
@@ -83,12 +83,12 @@ public class AgentCommand : Command
 
             string response = "";
             await AnsiConsole.Status()
-                .StartAsync("Thinking...", async ctx =>
+                .StartAsync("思考中...", async ctx =>
                 {
                     response = await agent.ChatAsync(input);
                 });
 
-            AnsiConsole.MarkupLine($"[green]Assistant:[/] {response}");
+        AnsiConsole.MarkupLine($"[green]助手:[/] {response}");
         }
     }
 }

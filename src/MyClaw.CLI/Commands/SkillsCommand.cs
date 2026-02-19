@@ -12,7 +12,7 @@ namespace MyClaw.CLI.Commands;
 /// </summary>
 public class SkillsCommand : Command
 {
-    public SkillsCommand() : base("skills", "Inspect configured skills")
+    public SkillsCommand() : base("skills", "检查配置的技能")
     {
         AddCommand(new SkillsListCommand());
         AddCommand(new SkillsInfoCommand());
@@ -25,11 +25,11 @@ public class SkillsCommand : Command
 /// </summary>
 public class SkillsListCommand : Command
 {
-    public SkillsListCommand() : base("list", "List loaded skills")
+    public SkillsListCommand() : base("list", "列出已加载的技能")
     {
         var jsonOption = new Option<bool>(
             aliases: new[] { "--json" },
-            description: "Output as JSON");
+            description: "以 JSON 格式输出");
 
         AddOption(jsonOption);
 
@@ -48,7 +48,7 @@ public class SkillsListCommand : Command
                 var skillsJson = skills.Select(s => new
                 {
                     name = s.Name,
-                    description = string.IsNullOrEmpty(s.Description) ? "(no description)" : s.Description,
+                    description = string.IsNullOrEmpty(s.Description) ? "(无描述)" : s.Description,
                     keywords = s.Keywords
                 });
 
@@ -67,26 +67,26 @@ public class SkillsListCommand : Command
             }
             else
             {
-                AnsiConsole.MarkupLine($"Skills: enabled={cfg.Skills.Enabled}, dir={skillDir}");
+                AnsiConsole.MarkupLine($"技能: 已启用={cfg.Skills.Enabled}, 目录={skillDir}");
 
                 if (!cfg.Skills.Enabled)
                 {
-                    AnsiConsole.MarkupLine("[yellow]Skills are disabled in config.[/]");
+                    AnsiConsole.MarkupLine("[yellow]技能已在配置中禁用[/]");
                     return;
                 }
 
-                AnsiConsole.MarkupLine($"Loaded skills: {skills.Count}");
+                AnsiConsole.MarkupLine($"已加载技能: {skills.Count}");
 
                 if (skills.Count == 0)
                 {
-                    AnsiConsole.MarkupLine("No skills found.");
+                    AnsiConsole.MarkupLine("未找到技能");
                 }
                 else
                 {
                     foreach (var skill in skills)
                     {
                         var desc = string.IsNullOrEmpty(skill.Description) 
-                            ? "(no description)" 
+                            ? "(无描述)" 
                             : skill.Description;
                         AnsiConsole.MarkupLine($"- [blue]{skill.Name}[/]: {desc}");
                     }
@@ -101,13 +101,13 @@ public class SkillsListCommand : Command
 /// </summary>
 public class SkillsInfoCommand : Command
 {
-    public SkillsInfoCommand() : base("info", "Show skill details")
+    public SkillsInfoCommand() : base("info", "显示技能详情")
     {
         var jsonOption = new Option<bool>(
             aliases: new[] { "--json" },
-            description: "Output as JSON");
+            description: "以 JSON 格式输出");
 
-        var nameArgument = new Argument<string>("name", "Skill name");
+        var nameArgument = new Argument<string>("name", "技能名称");
 
         AddOption(jsonOption);
         AddArgument(nameArgument);
@@ -118,7 +118,7 @@ public class SkillsInfoCommand : Command
             
             if (!cfg.Skills.Enabled)
             {
-                AnsiConsole.MarkupLine("[red]Skills are disabled in config[/]");
+                AnsiConsole.MarkupLine("[red]技能已在配置中禁用[/]");
                 return;
             }
 
@@ -131,11 +131,11 @@ public class SkillsInfoCommand : Command
             {
                 if (json)
                 {
-                    Console.WriteLine($"{{ \"schemaVersion\": 1, \"command\": \"skills.info\", \"ok\": false, \"error\": \"Skill not found: {name}\" }}");
+                    Console.WriteLine($"{{ \"schemaVersion\": 1, \"command\": \"skills.info\", \"ok\": false, \"error\": \"技能未找到: {name}\" }}");
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine($"[red]Skill not found: {name}[/]");
+                    AnsiConsole.MarkupLine($"[red]技能未找到: {name}[/]");
                 }
                 return;
             }
@@ -159,30 +159,30 @@ public class SkillsInfoCommand : Command
             }
             else
             {
-                AnsiConsole.MarkupLine($"[blue]Name:[/] {skill.Name}");
+                AnsiConsole.MarkupLine($"[blue]名称:[/] {skill.Name}");
                 
                 var desc = string.IsNullOrEmpty(skill.Description) 
-                    ? "(no description)" 
+                    ? "(无描述)" 
                     : skill.Description;
-                AnsiConsole.MarkupLine($"[blue]Description:[/] {desc}");
+                AnsiConsole.MarkupLine($"[blue]描述:[/] {desc}");
                 
-                AnsiConsole.MarkupLine($"[blue]Skills dir:[/] {skillDir}");
+                AnsiConsole.MarkupLine($"[blue]技能目录:[/] {skillDir}");
                 
                 if (skill.Keywords.Count == 0)
                 {
-                    AnsiConsole.MarkupLine("[blue]Keywords:[/] (none)");
+                    AnsiConsole.MarkupLine("[blue]关键词:[/] (无)");
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine($"[blue]Keywords:[/] {string.Join(", ", skill.Keywords)}");
+                    AnsiConsole.MarkupLine($"[blue]关键词:[/] {string.Join(", ", skill.Keywords)}");
                 }
 
-                AnsiConsole.MarkupLine($"[blue]Source:[/] {skill.SourcePath}");
+                AnsiConsole.MarkupLine($"[blue]来源:[/] {skill.SourcePath}");
                 
                 var preview = string.Join("\n", skill.Content.Split('\n').Take(8));
                 if (!string.IsNullOrEmpty(preview))
                 {
-                    AnsiConsole.MarkupLine("[blue]Prompt preview:[/]");
+                    AnsiConsole.MarkupLine("[blue]提示词预览:[/]");
                     AnsiConsole.MarkupLine(preview);
                 }
             }
@@ -195,11 +195,11 @@ public class SkillsInfoCommand : Command
 /// </summary>
 public class SkillsCheckCommand : Command
 {
-    public SkillsCheckCommand() : base("check", "Check skills directory and loading status")
+    public SkillsCheckCommand() : base("check", "检查技能目录和加载状态")
     {
         var jsonOption = new Option<bool>(
             aliases: new[] { "--json" },
-            description: "Output as JSON");
+            description: "以 JSON 格式输出");
 
         AddOption(jsonOption);
 
@@ -210,7 +210,7 @@ public class SkillsCheckCommand : Command
 
             if (!json)
             {
-                AnsiConsole.MarkupLine($"Skills: enabled={cfg.Skills.Enabled}, dir={skillDir}");
+                AnsiConsole.MarkupLine($"技能: 已启用={cfg.Skills.Enabled}, 目录={skillDir}");
             }
 
             if (!cfg.Skills.Enabled)
@@ -221,7 +221,7 @@ public class SkillsCheckCommand : Command
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine("Result: [yellow]disabled[/]");
+                    AnsiConsole.MarkupLine("结果: [yellow]已禁用[/]");
                 }
                 return;
             }
@@ -263,13 +263,13 @@ public class SkillsCheckCommand : Command
             }
             else
             {
-                AnsiConsole.MarkupLine($"Skill folders: {skillFolders}");
-                AnsiConsole.MarkupLine($"Loaded skills: {loaded}");
+                AnsiConsole.MarkupLine($"技能文件夹: {skillFolders}");
+                AnsiConsole.MarkupLine($"已加载技能: {loaded}");
                 if (missingSkillMd.Count > 0)
                 {
-                    AnsiConsole.MarkupLine($"[yellow]Missing SKILL.md: {string.Join(", ", missingSkillMd)}[/]");
+                    AnsiConsole.MarkupLine($"[yellow]缺少 SKILL.md: {string.Join(", ", missingSkillMd)}[/]");
                 }
-                AnsiConsole.MarkupLine("Result: [green]ok[/]");
+                AnsiConsole.MarkupLine("结果: [green]正常[/]");
             }
         }, jsonOption);
     }

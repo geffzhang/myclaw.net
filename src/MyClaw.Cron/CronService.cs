@@ -47,7 +47,7 @@ public class CronService
             }
         }
 
-        Console.WriteLine($"[cron] started with {_jobs.Count} jobs");
+        Console.WriteLine($"[cron] 已启动，共 {_jobs.Count} 个任务");
 
         // 启动 tick loop 处理 "every" 和 "at" 类型任务
         _ = TickLoopAsync(ct);
@@ -59,7 +59,7 @@ public class CronService
     public async Task StopAsync()
     {
         await _scheduler.Shutdown();
-        Console.WriteLine("[cron] stopped");
+        Console.WriteLine("[cron] 已停止");
     }
 
     /// <summary>
@@ -157,11 +157,11 @@ public class CronService
     /// </summary>
     internal async Task ExecuteJobAsync(CronJob job)
     {
-        Console.WriteLine($"[cron] executing job {job.Name} ({job.Id})");
+        Console.WriteLine($"[cron] 执行任务 {job.Name} ({job.Id})");
 
         if (OnJob == null)
         {
-            Console.WriteLine("[cron] no OnJob handler set");
+            Console.WriteLine("[cron] 未设置 OnJob 处理程序");
             return;
         }
 
@@ -176,7 +176,7 @@ public class CronService
                 job.State.LastError = "";
             }
 
-            Console.WriteLine($"[cron] job {job.Name} result: {Truncate(result, 100)}");
+            Console.WriteLine($"[cron] 任务 {job.Name} 结果: {Truncate(result, 100)}");
         }
         catch (Exception ex)
         {
@@ -187,7 +187,7 @@ public class CronService
                 job.State.LastError = ex.Message;
             }
 
-            Console.WriteLine($"[cron] job {job.Name} error: {ex.Message}");
+            Console.WriteLine($"[cron] 任务 {job.Name} 错误: {ex.Message}");
         }
 
         // 如果是一次性任务，执行后删除
@@ -270,7 +270,7 @@ public class CronService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[cron] warning: failed to load jobs: {ex.Message}");
+            Console.WriteLine($"[cron] 警告: 加载任务失败: {ex.Message}");
         }
     }
 
@@ -298,7 +298,7 @@ public class CronService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[cron] warning: failed to save jobs: {ex.Message}");
+            Console.WriteLine($"[cron] 警告: 保存任务失败: {ex.Message}");
         }
     }
 
