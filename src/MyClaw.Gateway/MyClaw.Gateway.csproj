@@ -6,6 +6,8 @@
     <ProjectReference Include="..\MyClaw.Channels\MyClaw.Channels.csproj" />
     <ProjectReference Include="..\MyClaw.Cron\MyClaw.Cron.csproj" />
     <ProjectReference Include="..\MyClaw.Heartbeat\MyClaw.Heartbeat.csproj" />
+    <ProjectReference Include="..\MyClaw.Memory\MyClaw.Memory.csproj" />
+    <ProjectReference Include="..\MyClaw.Skills\MyClaw.Skills.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

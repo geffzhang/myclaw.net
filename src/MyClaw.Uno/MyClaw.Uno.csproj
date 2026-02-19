@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- Uno Platform - Library mode (no XAML compilation) -->
+    <UnoSingleProject>true</UnoSingleProject>
+    <EnableDefaultXamlItems>false</EnableDefaultXamlItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Uno.WinUI" Version="5.5.66" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClaw.Core\MyClaw.Core.csproj" />
+    <ProjectReference Include="..\MyClaw.Gateway\MyClaw.Gateway.csproj" />
+  </ItemGroup>
+
+</Project>

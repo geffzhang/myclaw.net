@@ -11,33 +11,34 @@ Personal AI assistant built on [AgentScope.NET](https://github.com/linkerlin/age
 - ✅ 项目结构创建完成 / Project structure created
 - ✅ 设计方案完成 / Design plan completed
 - ✅ 实施计划完成 / Implementation plan completed
-- ⏳ Phase 1: 基础设施开发中 / Phase 1: Infrastructure in progress
+- ✅ Phase 1: 基础设施完成 / Phase 1: Infrastructure completed
+- ✅ Phase 3: Gateway 基础完成 / Phase 3: Gateway completed
+- ✅ Phase 5: Skills 系统完成 / Phase 5: Skills completed
+- ✅ Phase 6: Scheduling 完成 / Phase 6: Scheduling completed
+- ⏳ Phase 2: Core Agent 开发中 / Phase 2: Core Agent in progress
 
 ## 特性 Features
 
-### 计划实现 Planned Features
+### 已实现 Implemented
 
-- **CLI Agent** - 单次消息或交互式 REPL 模式 / Single message or interactive REPL mode
-- **Gateway** - 完整编排：渠道 + 定时任务 + 心跳 / Full orchestration: channels + cron + heartbeat
-- **多渠道支持** / Multi-Channel Support:
-  - Telegram Bot
-  - Feishu (飞书/Lark)
-  - WeCom (企业微信)
-  - WhatsApp
-  - Web UI (浏览器界面)
-- **多模态** - 图像识别和文档处理 / Image recognition and document processing
-- **定时任务** - JSON 持久化的 Cron 作业 / Cron jobs with JSON persistence
-- **心跳任务** - 周期性任务 / Periodic heartbeat tasks
-- **记忆系统** - 长期记忆 (MEMORY.md) + 每日记忆 / Long-term (MEMORY.md) + daily memories
-- **技能系统** - 从工作区加载自定义技能 / Custom skill loading from workspace
-- **多 Provider** - 支持 Anthropic 和 OpenAI 模型 / Support for Anthropic and OpenAI models
+- **CLI** - 完整的命令行接口 (agent, gateway, onboard, status, skills)
+- **配置系统** - JSON 配置 + 环境变量覆盖
+- **Memory 系统** - 长期记忆 (MEMORY.md) + 每日日记
+- **Gateway 基础** - MessageBus, ChannelManager, GatewayService
+- **Skills 系统** - SKILL.md 加载器 + 3 个示例 Skills
+- **Scheduling** - Cron 任务 (Quartz.NET) + Heartbeat 服务
+
+### 计划实现 Planned
+
+- **Agent 运行时** - 等待 AgentScope.NET 集成
+- **多渠道支持** - Telegram, Feishu, WeCom, WebUI
+- **多模态** - 图像识别和文档处理
 
 ## 快速开始 Quick Start
 
 ### 前置要求 Prerequisites
 
 - .NET 9.0 SDK
-- SQLite
 
 ### 构建 Build
 
@@ -56,16 +57,23 @@ dotnet test
 ### 配置 Configuration
 
 ```bash
-# Copy the example configuration
-cp .env.example .env
+# Initialize config and workspace
+dotnet run --project src/MyClaw.CLI -- onboard
 
-# Edit .env and add your API keys
-# vim .env
+# Edit config
+# ~/.myclaw/config.json
 ```
 
 ### 运行 Run
 
 ```bash
+# Show status
+dotnet run --project src/MyClaw.CLI -- status
+
+# Skills management
+dotnet run --project src/MyClaw.CLI -- skills list
+dotnet run --project src/MyClaw.CLI -- skills info writer
+
 # Run agent mode (single message)
 dotnet run --project src/MyClaw.CLI -- agent -m "Hello"
 
@@ -96,55 +104,68 @@ myclaw.net/
 ├── docs/
 │   ├── 设计方案.md           # 设计文档 / Design document
 │   └── 实施计划.md           # 实施计划 / Implementation plan
-├── workspace/                # 默认工作区 / Default workspace
-│   └── skills/               # 自定义技能 / Custom skills
-└── MyClaw.sln
+├── workspace/                # 示例工作区 / Example workspace
+│   └── skills/               # 示例技能 / Example skills
+└── MyClaw.slnx
 ```
+
+## 示例 Skills
+
+项目包含 3 个示例 Skills：
+
+| Skill | 描述 | 关键词 |
+|-------|------|--------|
+| writer | 写作助手 | write, draft, content, article |
+| web-search | 网络搜索 | search, web, google, find |
+| calculator | 计算器 | calculate, math, convert |
 
 ## 文档 Documentation
 
-- [设计方案.md](./设计方案.md) - 详细的系统设计和架构 / Detailed system design and architecture
+- [设计方案.md](./设计方案.md) - 详细的系统设计和架构 / Detailed system design
 - [实施计划.md](./实施计划.md) - 16周实施计划 / 16-week implementation plan
+- [实施进度报告.md](./实施进度报告.md) - 当前进度报告 / Current progress report
 
 ## 技术栈 Tech Stack
 
 - **.NET 9.0** - 核心运行时 / Core runtime
-- **AgentScope.NET** - Agent 框架 / Agent framework
-- **Entity Framework Core** - ORM
-- **SQLite** - 数据库 / Database
+- **AgentScope.NET** - Agent 框架 / Agent framework (待集成)
 - **System.CommandLine** - CLI 框架 / CLI framework
 - **Quartz.NET** - 任务调度 / Job scheduling
+- **Serilog** - 日志 / Logging
 
 ## 开发路线图 Roadmap
 
-### Phase 1: 基础设施 (Week 1-2)
+### Phase 1: 基础设施 (Week 1-2) ✅
 - [x] 项目结构搭建
-- [ ] 配置系统实现
-- [ ] 日志系统集成
+- [x] 配置系统实现 (JSON + 环境变量)
+- [x] 日志系统集成 (Serilog)
+- [x] CLI 框架 (System.CommandLine)
 
-### Phase 2: Core Agent (Week 3-4)
-- [ ] MyClawAgent 实现
-- [ ] Memory 系统集成
-- [ ] Agent 模式（单次 + REPL）
+### Phase 2: Core Agent (Week 3-4) ⏳
+- [x] Memory 系统集成 (长期记忆 + 每日记忆)
+- [ ] MyClawAgent 实现 (等待 AgentScope.NET)
 
-### Phase 3: Gateway 基础 (Week 5-6)
-- [ ] MessageBus 实现
-- [ ] ChannelManager 实现
-- [ ] Gateway 服务协调
+### Phase 3: Gateway 基础 (Week 5-6) ✅
+- [x] MessageBus 实现 (Channel<T>)
+- [x] ChannelManager 实现
+- [x] GatewayService 实现
+- [x] 消息模型 (Inbound/Outbound)
 
-### Phase 4: Channels (Week 7-10)
+### Phase 4: Channels (Week 7-10) ⏳
 - [ ] WebUI Channel
 - [ ] Telegram Channel
 - [ ] Feishu Channel
 - [ ] WeCom Channel
 
-### Phase 5: Skills & Tools (Week 11-12)
-- [ ] Skill 加载系统
-- [ ] 示例 Skills
+### Phase 5: Skills & Tools (Week 11-12) ✅
+- [x] Skill 加载系统 (YAML Frontmatter 解析)
+- [x] SkillManager (技能管理和查询)
+- [x] 3 个示例 Skills (writer, web-search, calculator)
+- [x] Skills CLI 完善
 
-### Phase 6: Scheduling (Week 13-14)
-- [ ] Cron 系统
-- [ ] Heartbeat 服务
+### Phase 6: Scheduling (Week 13-14) ✅
+- [x] Cron 系统 (Quartz.NET)
+- [x] Heartbeat 服务
 
 ### Phase 7: Testing & Polish (Week 15-16)
 - [ ] 完整测试
@@ -155,7 +176,7 @@ myclaw.net/
 
 欢迎贡献！请查看 [实施计划.md](./实施计划.md) 了解当前进展和未完成的任务。
 
-Contributions are welcome! Please see [实施计划.md](./实施计划.md) for current progress and pending tasks.
+Contributions are welcome! Please see [实施计划.md](./实施计划.md) for current progress.
 
 ## 许可证 License
 
@@ -170,5 +191,5 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件
 ---
 
 **Status**: 🚧 In Development  
-**Version**: 0.1.0-alpha  
+**Version**: 0.3.0-alpha  
 **Last Updated**: 2026-02-19

@@ -9,6 +9,7 @@
     <Project Path="src/MyClaw.Heartbeat/MyClaw.Heartbeat.csproj" />
     <Project Path="src/MyClaw.Memory/MyClaw.Memory.csproj" />
     <Project Path="src/MyClaw.Skills/MyClaw.Skills.csproj" />
+    <Project Path="src/MyClaw.Uno/MyClaw.Uno.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MyClaw.Core.Tests/MyClaw.Core.Tests.csproj" />
