@@ -1,35 +1,37 @@
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace MyClaw.Core.Execution;
 
-/// <summary>
-/// 命令执行结果
-/// </summary>
 public class CommandResult
 {
     /// <summary>
     /// 输出内容
     /// </summary>
     public string Output { get; set; } = string.Empty;
-
     /// <summary>
     /// 退出码
     /// </summary>
     public int ExitCode { get; set; }
-
     /// <summary>
     /// 是否成功
     /// </summary>
     public bool IsSuccess => ExitCode == 0;
 }
 
-/// <summary>
-/// 安全命令执行器 - 白名单机制
-/// </summary>
 public class CommandExecutor
 {
-    // 允许的命令白名单
+    private readonly ILogger<CommandExecutor>? _logger;
+
+    public CommandExecutor(ILogger<CommandExecutor>? logger = null)
+    {
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// 允许的命令白名单
+    /// </summary>
     private static readonly HashSet<string> AllowedCommands = new(StringComparer.OrdinalIgnoreCase)
     {
         // 文件操作
@@ -43,13 +45,16 @@ public class CommandExecutor
         "python", "python3", "pip", "pip3",
         "cargo", "rustc",
         "go", "golang",
+        "dotnet", "nuget","dnx",
         // 构建工具
         "make", "cmake", "msbuild",
         // 其他
         "tree", "du", "df", "curl", "wget"
     };
 
-    // 危险命令黑名单（双重保险）
+    /// <summary>
+    /// 命令黑名单
+    /// </summary>
     private static readonly HashSet<string> BlockedCommands = new(StringComparer.OrdinalIgnoreCase)
     {
         "rm", "del", "rd", "rmdir",
@@ -65,12 +70,17 @@ public class CommandExecutor
     /// <summary>
     /// 执行命令（带安全检查）
     /// </summary>
+    /// <param name="command"></param>
+    /// <param name="timeoutMs"></param>
+    /// <returns></returns>
     public async Task<CommandResult> ExecuteAsync(string command, int timeoutMs = 10000)
     {
-        // 安全检查
         var validation = ValidateCommand(command);
         if (!validation.IsValid)
         {
+            // 日志记录被拒绝的命令
+            _logger?.LogWarning("命令被拒绝: {Command}，原因: {Reason}", command, validation.ErrorMessage);
+
             return new CommandResult
             {
                 Output = $"安全错误: {validation.ErrorMessage}",
@@ -152,10 +162,13 @@ public class CommandExecutor
     /// <summary>
     /// 验证命令安全性
     /// </summary>
+    /// <param name="command"></param>
+    /// <returns></returns>
     private (bool IsValid, string ErrorMessage) ValidateCommand(string command)
     {
         if (string.IsNullOrWhiteSpace(command))
         {
+            _logger?.LogWarning("命令被拒绝: 命令为空");
             return (false, "命令为空");
         }
 
@@ -170,6 +183,7 @@ public class CommandExecutor
             var cmdName = Path.GetFileName(firstToken);
             if (!AllowedCommands.Contains(cmdName))
             {
+                _logger?.LogWarning("命令被拒绝: {Command}，原因: 命令 '{CmdName}' 不在允许的白名单中", command, cmdName);
                 return (false, $"命令 '{cmdName}' 不在允许的白名单中");
             }
         }
@@ -177,6 +191,7 @@ public class CommandExecutor
         {
             if (!AllowedCommands.Contains(firstToken))
             {
+                _logger?.LogWarning("命令被拒绝: {Command}，原因: 命令 '{FirstToken}' 不在允许的白名单中", command, firstToken);
                 return (false, $"命令 '{firstToken}' 不在允许的白名单中");
             }
         }
@@ -184,6 +199,7 @@ public class CommandExecutor
         // 检查危险字符
         if (BlockedCommands.Any(bc => command.Contains(bc)))
         {
+            _logger?.LogWarning("命令被拒绝: {Command}，原因: 命令包含潜在危险字符/模式", command);
             return (false, "命令包含潜在危险字符/模式");
         }
 
