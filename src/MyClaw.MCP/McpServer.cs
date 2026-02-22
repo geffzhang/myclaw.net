@@ -11,7 +11,7 @@ using MyClaw.Skills;
 namespace MyClaw.MCP;
 
 /// <summary>
-/// MCP Server - Model Context Protocol over HTTP
+/// MCP Server - Model Context Protocol over HTTP (Streamable HTTP)
 /// </summary>
 public class McpServer
 {
@@ -34,7 +34,6 @@ public class McpServer
     {
         _cts = new CancellationTokenSource();
 
-        // 初始化组件
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var workspace = Path.Combine(home, ".myclaw", "workspace");
         Directory.CreateDirectory(workspace);
@@ -48,7 +47,6 @@ public class McpServer
 
         await _entityStore.LoadAsync();
 
-        // 启动 HTTP 服务器
         _listener = new HttpListener();
         _listener.Prefixes.Add($"http://localhost:{_port}/");
         _listener.Start();
@@ -90,10 +88,9 @@ public class McpServer
         var request = context.Request;
         var response = context.Response;
 
-        // CORS
         response.Headers.Add("Access-Control-Allow-Origin", "*");
         response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Mcp-Session-Id");
 
         if (request.HttpMethod == "OPTIONS")
         {
@@ -106,173 +103,217 @@ public class McpServer
 
         try
         {
-            switch (path)
+            if (path == "/mcp" && request.HttpMethod == "POST")
             {
-                case "/mcp/v1/initialize":
-                    await HandleInitializeAsync(response);
-                    break;
-                case "/mcp/v1/tools/list":
-                    await HandleListToolsAsync(response);
-                    break;
-                case "/mcp/v1/tools/call":
-                    await HandleCallToolAsync(request, response);
-                    break;
-                case "/mcp/v1/resources/list":
-                    await HandleListResourcesAsync(response);
-                    break;
-                case "/mcp/v1/resources/read":
-                    await HandleReadResourceAsync(request, response);
-                    break;
-                case "/mcp/v1/prompts/list":
-                    await HandleListPromptsAsync(response);
-                    break;
-                case "/mcp/v1/prompts/get":
-                    await HandleGetPromptAsync(request, response);
-                    break;
-                case "/sse":
-                    await HandleSseAsync(response);
-                    break;
-                default:
-                    response.StatusCode = 404;
-                    await WriteJsonAsync(response, new { error = "未找到" });
-                    break;
+                await HandleJsonRpcAsync(request, response);
+            }
+            else if (path == "/health")
+            {
+                await WriteJsonAsync(response, new { status = "ok" });
+            }
+            else
+            {
+                response.StatusCode = 404;
+                await WriteJsonAsync(response, new { error = "Not found" });
             }
         }
         catch (Exception ex)
         {
-                Console.WriteLine($"[MCP] 错误: {ex.Message}");
+            Console.WriteLine($"[MCP] 错误: {ex.Message}");
             response.StatusCode = 500;
             await WriteJsonAsync(response, new { error = ex.Message });
         }
     }
 
-    private async Task HandleInitializeAsync(HttpListenerResponse response)
+    private async Task HandleJsonRpcAsync(HttpListenerRequest request, HttpListenerResponse response)
     {
-        var result = new
+        var body = await ReadBodyAsync(request);
+        var jsonRpcRequest = JsonSerializer.Deserialize<JsonRpcRequest>(body, new JsonSerializerOptions
         {
-            protocolVersion = "2024-11-05",
-            serverInfo = new { name = "myclaw", version = "1.0.0" },
-            capabilities = new
+            PropertyNameCaseInsensitive = true
+        });
+
+        if (jsonRpcRequest == null || jsonRpcRequest.JsonRpc != "2.0")
+        {
+            await WriteJsonRpcErrorAsync(response, null, -32600, "Invalid Request");
+            return;
+        }
+
+        object? result = null;
+        JsonRpcError? error = null;
+
+        try
+        {
+            result = jsonRpcRequest.Method switch
             {
-                tools = new { },
-                resources = new { },
-                prompts = new { }
+                "initialize" => HandleInitialize(jsonRpcRequest.Params),
+                "notifications/initialized" => null,
+                "tools/list" => HandleListTools(),
+                "tools/call" => await HandleCallToolAsync(jsonRpcRequest.Params),
+                "resources/list" => HandleListResources(),
+                "resources/read" => HandleReadResource(jsonRpcRequest.Params),
+                "resources/templates/list" => HandleListResourceTemplates(),
+                "prompts/list" => HandleListPrompts(),
+                "prompts/get" => HandleGetPrompt(jsonRpcRequest.Params),
+                "ping" => new { },
+                _ => null
+            };
+
+            if (result == null && jsonRpcRequest.Method != "notifications/initialized" && jsonRpcRequest.Method != "ping")
+            {
+                error = new JsonRpcError { Code = -32601, Message = $"Method not found: {jsonRpcRequest.Method}" };
             }
-        };
-        await WriteJsonAsync(response, result);
+        }
+        catch (Exception ex)
+        {
+            error = new JsonRpcError { Code = -32603, Message = ex.Message };
+        }
+
+        if (jsonRpcRequest.Id == null && jsonRpcRequest.Method == "notifications/initialized")
+        {
+            response.StatusCode = 204;
+            response.Close();
+            return;
+        }
+
+        if (error != null)
+        {
+            await WriteJsonRpcErrorAsync(response, jsonRpcRequest.Id, error.Code, error.Message);
+        }
+        else
+        {
+            await WriteJsonRpcResultAsync(response, jsonRpcRequest.Id, result);
+        }
     }
 
-    private async Task HandleListToolsAsync(HttpListenerResponse response)
+    private object HandleInitialize(JsonElement? Params)
+    {
+        return new
+        {
+            protocolVersion = "2024-11-05",
+            capabilities = new
+            {
+                tools = new { listChanged = false },
+                resources = new { listChanged = false, subscribe = false },
+                prompts = new { listChanged = false }
+            },
+            serverInfo = new { name = "myclaw", version = "1.0.0" }
+        };
+    }
+
+    private object HandleListTools()
     {
         var tools = new List<object>
         {
             new
             {
-                name = "miniclaw_update",
+                name = "myclaw_update",
                 description = "【本能：神经重塑】修改核心认知文件",
                 inputSchema = new
                 {
                     type = "object",
                     properties = new
                     {
-                        filename = new { type = "string", @enum = new[] { "AGENTS.md", "SOUL.md", "USER.md", "TOOLS.md", "IDENTITY.md", "MEMORY.md", "HEARTBEAT.md" } },
-                        content = new { type = "string" }
+                        filename = new { type = "string", description = "文件名", @enum = new[] { "AGENTS.md", "SOUL.md", "USER.md", "TOOLS.md", "IDENTITY.md", "MEMORY.md", "HEARTBEAT.md" } },
+                        content = new { type = "string", description = "文件内容" }
                     },
                     required = new[] { "filename", "content" }
                 }
             },
             new
             {
-                name = "miniclaw_note",
+                name = "myclaw_note",
                 description = "【本能：海马体写入】追加今日日志",
                 inputSchema = new
                 {
                     type = "object",
-                    properties = new { text = new { type = "string" } },
+                    properties = new { text = new { type = "string", description = "日志内容" } },
                     required = new[] { "text" }
                 }
             },
             new
             {
-                name = "miniclaw_read",
+                name = "myclaw_read",
                 description = "【本能：全脑唤醒】读取上下文和记忆",
                 inputSchema = new
                 {
                     type = "object",
-                    properties = new { mode = new { type = "string", @enum = new[] { "full", "minimal" } } }
+                    properties = new { mode = new { type = "string", description = "读取模式", @enum = new[] { "full", "minimal" } } }
                 }
             },
             new
             {
-                name = "miniclaw_archive",
+                name = "myclaw_archive",
                 description = "【日志归档】归档今日日志",
-                inputSchema = new { type = "object" }
+                inputSchema = new { type = "object", description = "无需参数" }
             },
             new
             {
-                name = "miniclaw_entity",
+                name = "myclaw_entity",
                 description = "【本能：概念连接】管理实体知识图谱",
                 inputSchema = new
                 {
                     type = "object",
                     properties = new
                     {
-                        action = new { type = "string", @enum = new[] { "add", "remove", "link", "query", "list" } },
-                        name = new { type = "string" },
-                        type = new { type = "string", @enum = new[] { "person", "project", "tool", "concept", "place", "other" } },
-                        attributes = new { type = "object" },
-                        relation = new { type = "string" }
+                        action = new { type = "string", description = "操作类型", @enum = new[] { "add", "remove", "link", "query", "list" } },
+                        name = new { type = "string", description = "实体名称" },
+                        type = new { type = "string", description = "实体类型", @enum = new[] { "person", "project", "tool", "concept", "place", "other" } },
+                        attributes = new { type = "object", description = "属性" },
+                        relation = new { type = "string", description = "关系" }
                     },
                     required = new[] { "action" }
                 }
             },
             new
             {
-                name = "miniclaw_exec",
+                name = "myclaw_exec",
                 description = "【本能：感官与手】安全执行终端命令",
                 inputSchema = new
                 {
                     type = "object",
-                    properties = new { command = new { type = "string" } },
+                    properties = new { command = new { type = "string", description = "要执行的命令" } },
                     required = new[] { "command" }
                 }
             },
             new
             {
-                name = "miniclaw_status",
+                name = "myclaw_status",
                 description = "【系统诊断】返回完整状态",
-                inputSchema = new { type = "object" }
+                inputSchema = new { type = "object", description = "无需参数" }
             }
         };
 
-        // 添加技能工具
         foreach (var skill in _skillManager.LoadedSkills)
         {
             tools.Add(new
             {
                 name = $"skill_{skill.Name}",
                 description = $"【Skill: {skill.Name}】{skill.Description}",
-                inputSchema = new { type = "object" }
+                inputSchema = new { type = "object", description = "技能输入" }
             });
         }
 
-        await WriteJsonAsync(response, new { tools });
+        return new { tools };
     }
 
-    private async Task HandleCallToolAsync(HttpListenerRequest request, HttpListenerResponse response)
+    private async Task<object> HandleCallToolAsync(JsonElement? Params)
     {
-        var body = await ReadBodyAsync(request);
-        var call = JsonSerializer.Deserialize<ToolCallRequest>(body);
-
-        if (call == null)
+        if (Params == null || !Params.Value.TryGetProperty("name", out var nameEl))
         {
-            response.StatusCode = 400;
-            await WriteJsonAsync(response, new { error = "无效请求" });
-            return;
+            return new { isError = true, content = new[] { new { type = "text", text = "Missing tool name" } } };
         }
 
-        var result = await ExecuteToolAsync(call.name, call.arguments);
-        await WriteJsonAsync(response, new { content = new[] { new { type = "text", text = result } } });
+        var name = nameEl.GetString() ?? "";
+        Dictionary<string, object>? args = null;
+
+        if (Params.Value.TryGetProperty("arguments", out var argsEl))
+        {
+            args = JsonSerializer.Deserialize<Dictionary<string, object>>(argsEl.GetRawText());
+        }
+
+        var result = await ExecuteToolAsync(name, args);
+        return new { content = new[] { new { type = "text", text = result } } };
     }
 
     private async Task<string> ExecuteToolAsync(string name, Dictionary<string, object>? args)
@@ -283,13 +324,13 @@ public class McpServer
         {
             return name switch
             {
-                "miniclaw_update" => await ToolUpdateAsync(args),
-                "miniclaw_note" => ToolNote(args),
-                "miniclaw_read" => ToolRead(args),
-                "miniclaw_archive" => ToolArchive(),
-                "miniclaw_entity" => await ToolEntityAsync(args),
-                "miniclaw_exec" => await ToolExecAsync(args),
-                "miniclaw_status" => ToolStatus(),
+                "myclaw_update" => await ToolUpdateAsync(args),
+                "myclaw_note" => ToolNote(args),
+                "myclaw_read" => ToolRead(args),
+                "myclaw_archive" => ToolArchive(),
+                "myclaw_entity" => await ToolEntityAsync(args),
+                "myclaw_exec" => await ToolExecAsync(args),
+                "myclaw_status" => ToolStatus(),
                 _ => name.StartsWith("skill_") ? await ToolSkillAsync(name, args) : $"未知工具: {name}"
             };
         }
@@ -307,7 +348,6 @@ public class McpServer
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var path = Path.Combine(home, ".myclaw", "workspace", filename);
 
-        // 备份
         if (File.Exists(path))
         {
             File.Copy(path, path + ".bak", overwrite: true);
@@ -330,7 +370,6 @@ public class McpServer
 
         var parts = new List<string>();
 
-        // 核心文件
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var workspace = Path.Combine(home, ".myclaw", "workspace");
 
@@ -343,14 +382,12 @@ public class McpServer
             }
         }
 
-        // 记忆
         var memory = _memoryStore.ReadLongTerm();
         if (!string.IsNullOrEmpty(memory))
         {
             parts.Add($"## MEMORY.md\n{memory}");
         }
 
-        // 今日
         var today = _memoryStore.ReadToday();
         if (!string.IsNullOrEmpty(today))
         {
@@ -422,7 +459,7 @@ public class McpServer
     {
         var name = args["name"].ToString()!;
         var entity = await _entityStore.QueryAsync(name);
-        if (entity == null)         return $"实体 '{name}' 不存在。";
+        if (entity == null) return $"实体 '{name}' 不存在。";
 
         var attrs = string.Join(", ", entity.Attributes.Select(a => $"{a.Key}: {a.Value}"));
         return $"**{entity.Name}** ({entity.Type})\nMentions: {entity.MentionCount}\nAttributes: {attrs}\nRelations: {string.Join("; ", entity.Relations)}";
@@ -476,72 +513,118 @@ public class McpServer
         return $"## Skill: {skill.Name}\n\n{content}\n\nInput: {JsonSerializer.Serialize(args)}";
     }
 
-    private async Task HandleListResourcesAsync(HttpListenerResponse response)
+    private object HandleListResources()
     {
         var resources = new List<object>
         {
-            new { uri = "myclaw://context", name = "MyClaw Context", mimeType = "text/markdown" },
-            new { uri = "myclaw://skills", name = "Skills Index", mimeType = "text/markdown" }
+            new { uri = "myclaw://context", name = "MyClaw Context", mimeType = "text/markdown", description = "完整的上下文和记忆" },
+            new { uri = "myclaw://skills", name = "Skills Index", mimeType = "text/markdown", description = "技能列表" },
+            new { uri = "myclaw://status", name = "MyClaw Status", mimeType = "text/markdown", description = "系统状态" }
         };
 
-        await WriteJsonAsync(response, new { resources });
+        return new { resources };
     }
 
-    private async Task HandleReadResourceAsync(HttpListenerRequest request, HttpListenerResponse response)
+    private object HandleReadResource(JsonElement? Params)
     {
-        var uri = request.QueryString["uri"] ?? "";
+        if (Params == null || !Params.Value.TryGetProperty("uri", out var uriEl))
+        {
+            return new { contents = Array.Empty<object>() };
+        }
+
+        var uri = uriEl.GetString() ?? "";
         var content = uri switch
         {
             "myclaw://context" => ToolRead(new Dictionary<string, object>()),
             "myclaw://skills" => string.Join("\n", _skillManager.LoadedSkills.Select(s => $"- {s.Name}: {s.Description}")),
+            "myclaw://status" => ToolStatus(),
             _ => "未知资源"
         };
 
-        await WriteJsonAsync(response, new { contents = new[] { new { uri, mimeType = "text/markdown", text = content } } });
+        return new
+        {
+            contents = new[]
+            {
+                new { uri, mimeType = "text/markdown", text = content }
+            }
+        };
     }
 
-    private async Task HandleListPromptsAsync(HttpListenerResponse response)
+    private object HandleListResourceTemplates()
+    {
+        return new { resourceTemplates = Array.Empty<object>() };
+    }
+
+    private object HandleListPrompts()
     {
         var prompts = new List<object>
         {
-            new { name = "miniclaw_wakeup", description = "唤醒并加载上下文" },
-            new { name = "miniclaw_growup", description = "记忆蒸馏" },
-            new { name = "miniclaw_briefing", description = "每日简报" }
+            new { name = "myclaw_wakeup", description = "唤醒并加载上下文" },
+            new { name = "myclaw_growup", description = "记忆蒸馏" },
+            new { name = "myclaw_briefing", description = "每日简报" }
         };
 
-        await WriteJsonAsync(response, new { prompts });
+        return new { prompts };
     }
 
-    private async Task HandleGetPromptAsync(HttpListenerRequest request, HttpListenerResponse response)
+    private object HandleGetPrompt(JsonElement? Params)
     {
-        var name = request.QueryString["name"] ?? "";
+        if (Params == null || !Params.Value.TryGetProperty("name", out var nameEl))
+        {
+            return new { messages = Array.Empty<object>() };
+        }
+
+        var name = nameEl.GetString() ?? "";
         var messages = name switch
         {
-            "miniclaw_wakeup" => new[] { new { role = "user", content = new { type = "text", text = "系统: 正在唤醒... 调用工具 `miniclaw_read` 加载上下文。" } } },
-            "miniclaw_growup" => new[] { new { role = "user", content = new { type = "text", text = "系统: 正在进行记忆蒸馏。检查今日日志并更新 MEMORY.md。" } } },
-            "miniclaw_briefing" => new[] { new { role = "user", content = new { type = "text", text = $"每日简报:\n{ToolStatus()}" } } },
+            "myclaw_wakeup" => new[]
+            {
+                new { role = "user", content = new { type = "text", text = "系统: 正在唤醒... 调用工具 `myclaw_read` 加载上下文。" } }
+            },
+            "myclaw_growup" => new[]
+            {
+                new { role = "user", content = new { type = "text", text = "系统: 正在进行记忆蒸馏。检查今日日志并更新 MEMORY.md。" } }
+            },
+            "myclaw_briefing" => new[]
+            {
+                new { role = "user", content = new { type = "text", text = $"每日简报:\n{ToolStatus()}" } }
+            },
             _ => Array.Empty<object>()
         };
 
-        await WriteJsonAsync(response, new { messages });
+        return new { messages };
     }
 
-    private async Task HandleSseAsync(HttpListenerResponse response)
+    private async Task WriteJsonRpcResultAsync(HttpListenerResponse response, object? id, object? result)
     {
-        response.ContentType = "text/event-stream";
-        response.Headers.Add("Cache-Control", "no-cache");
+        var jsonRpcResponse = new
+        {
+            jsonrpc = "2.0",
+            id,
+            result
+        };
+        await WriteJsonAsync(response, jsonRpcResponse);
+    }
 
-        var encoder = Encoding.UTF8;
-        var data = encoder.GetBytes("data: {\"type\":\"connected\"}\n\n");
-        await response.OutputStream.WriteAsync(data);
-
-        // 保持连接 30 秒
-        await Task.Delay(30000);
+    private async Task WriteJsonRpcErrorAsync(HttpListenerResponse response, object? id, int code, string message)
+    {
+        var jsonRpcResponse = new
+        {
+            jsonrpc = "2.0",
+            id,
+            error = new { code, message }
+        };
+        response.StatusCode = 400;
+        await WriteJsonAsync(response, jsonRpcResponse);
     }
 
     private async Task WriteJsonAsync(HttpListenerResponse response, object data)
     {
-        var json = JsonSerializer.Serialize(data);
+        var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        });
         var bytes = Encoding.UTF8.GetBytes(json);
         response.ContentType = "application/json";
         response.ContentLength64 = bytes.Length;
@@ -555,9 +638,17 @@ public class McpServer
         return await reader.ReadToEndAsync();
     }
 
-    private class ToolCallRequest
+    private class JsonRpcRequest
     {
-        public string name { get; set; } = string.Empty;
-        public Dictionary<string, object>? arguments { get; set; }
+        public string JsonRpc { get; set; } = string.Empty;
+        public object? Id { get; set; }
+        public string Method { get; set; } = string.Empty;
+        public JsonElement? Params { get; set; }
+    }
+
+    private class JsonRpcError
+    {
+        public int Code { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

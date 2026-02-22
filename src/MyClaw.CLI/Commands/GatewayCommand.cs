@@ -60,7 +60,7 @@ public class GatewayCommand : Command
                 AnsiConsole.MarkupLine($"[green]✓ 网关已启动 {cfg.Gateway.Host}:{cfg.Gateway.Port}[/]");
                 AnsiConsole.MarkupLine("");
                 AnsiConsole.MarkupLine("[blue]运行中的服务:[/]");
-                AnsiConsole.MarkupLine($"  • MCP 服务器:   http://localhost:{mcpPort}");
+                AnsiConsole.MarkupLine($"  • MCP 服务器:   http://localhost:{mcpPort}/mcp");
                 AnsiConsole.MarkupLine($"  • 网关:         {cfg.Gateway.Host}:{cfg.Gateway.Port}");
                 AnsiConsole.MarkupLine($"  • WebUI:        http://localhost:{cfg.Channels?.WebUI?.Port ?? 8080} (如已启用)");
                 AnsiConsole.MarkupLine("");
