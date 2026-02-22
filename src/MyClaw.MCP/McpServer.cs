@@ -16,6 +16,7 @@ namespace MyClaw.MCP;
 public class McpServer
 {
     private readonly int _port;
+    private readonly string? _workspacePath;
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
 
@@ -24,10 +25,12 @@ public class McpServer
     private SkillManager _skillManager = null!;
     private CommandExecutor _commandExecutor = null!;
     private SignalDetector _signalDetector = null!;
+    private string _workspace = null!;
 
-    public McpServer(int port)
+    public McpServer(int port, string? workspacePath = null)
     {
         _port = port;
+        _workspacePath = workspacePath;
     }
 
     public async Task StartAsync()
@@ -35,12 +38,14 @@ public class McpServer
         _cts = new CancellationTokenSource();
 
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var workspace = Path.Combine(home, ".myclaw", "workspace");
-        Directory.CreateDirectory(workspace);
+        _workspace = !string.IsNullOrEmpty(_workspacePath) 
+            ? _workspacePath 
+            : Path.Combine(home, ".myclaw", "workspace");
+        Directory.CreateDirectory(_workspace);
 
-        _memoryStore = new MemoryStore(workspace);
-        _entityStore = new EntityStore(workspace);
-        _skillManager = new SkillManager(workspace);
+        _memoryStore = new MemoryStore(_workspace);
+        _entityStore = new EntityStore(_workspace);
+        _skillManager = new SkillManager(_workspace);
         _skillManager.LoadSkills();
         _commandExecutor = new CommandExecutor();
         _signalDetector = new SignalDetector();
@@ -345,8 +350,7 @@ public class McpServer
         var filename = args["filename"].ToString()!;
         var content = args["content"].ToString()!;
 
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var path = Path.Combine(home, ".myclaw", "workspace", filename);
+        var path = Path.Combine(_workspace, filename);
 
         if (File.Exists(path))
         {
@@ -370,12 +374,9 @@ public class McpServer
 
         var parts = new List<string>();
 
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var workspace = Path.Combine(home, ".myclaw", "workspace");
-
         foreach (var file in new[] { "AGENTS.md", "SOUL.md", "IDENTITY.md", "USER.md", "TOOLS.md" })
         {
-            var path = Path.Combine(workspace, file);
+            var path = Path.Combine(_workspace, file);
             if (File.Exists(path))
             {
                 parts.Add($"## {file}\n{File.ReadAllText(path)}");
@@ -489,18 +490,30 @@ public class McpServer
 
     private string ToolStatus()
     {
-        var evaluation = _memoryStore.EvaluateDistillation();
-        var entityCount = _entityStore.GetCountAsync().Result;
-        var archivedCount = _memoryStore.GetArchivedCount();
+        try
+        {
+            var evaluation = _memoryStore.EvaluateDistillation();
+            var entityCount = _entityStore.GetCountAsync().GetAwaiter().GetResult();
+            var archivedCount = _memoryStore.GetArchivedCount();
 
-        return $"""
-            === MyClaw Status ===
+            return $"""
+                === MyClaw Status ===
 
-            Distillation: {(evaluation.ShouldDistill ? $"⚠️ {evaluation.Urgency}: {evaluation.Reason}" : "✅ OK")}
-            Entities: {entityCount}
-            Archived: {archivedCount}
-            Skills: {_skillManager.LoadedSkills.Count}
-            """;
+                Distillation: {(evaluation.ShouldDistill ? $"⚠️ {evaluation.Urgency}: {evaluation.Reason}" : "✅ OK")}
+                Entities: {entityCount}
+                Archived: {archivedCount}
+                Skills: {_skillManager.LoadedSkills.Count}
+                """;
+        }
+        catch (Exception ex)
+        {
+            return $"""
+                === MyClaw Status ===
+                
+                Error: {ex.Message}
+                Skills: {_skillManager.LoadedSkills.Count}
+                """;
+        }
     }
 
     private async Task<string> ToolSkillAsync(string name, Dictionary<string, object> args)

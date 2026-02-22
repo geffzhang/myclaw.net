@@ -61,7 +61,8 @@ public class MyClawConfiguration
                 Model = DefaultModel,
                 MaxTokens = DefaultMaxTokens,
                 Temperature = DefaultTemperature,
-                MaxToolIterations = DefaultMaxToolIterations
+                MaxToolIterations = DefaultMaxToolIterations,
+                Verbose = false
             },
             Tools = new ToolsConfig
             {
@@ -111,12 +112,18 @@ public class AgentConfig
 
     [JsonPropertyName("maxToolIterations")]
     public int MaxToolIterations { get; set; } = MyClawConfiguration.DefaultMaxToolIterations;
+
+    [JsonPropertyName("verbose")]
+    public bool Verbose { get; set; } = false;
 }
 
 public class ProviderConfig
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = "anthropic";
+
+    [JsonPropertyName("model")]
+    public string? Model { get; set; }
 
     [JsonPropertyName("apiKey")]
     public string ApiKey { get; set; } = "";

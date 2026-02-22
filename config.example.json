@@ -7,7 +7,9 @@
   "agent": {
     "model": "claude-sonnet-4-5-20250929",
     "name": "MyClaw",
-    "workspace": "~/.myclaw/workspace"
+    "workspace": "~/.myclaw/workspace",
+    "maxToolIterations": 10,
+    "verbose": false
   },
   "channels": {
     "telegram": {
