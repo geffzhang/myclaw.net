@@ -8,9 +8,6 @@ using MyClaw.Skills;
 
 namespace MyClaw.Agent;
 
-/// <summary>
-/// MyClaw Agent - 基于 AgentScope.NET 的个人 AI 助手
-/// </summary>
 public class MyClawAgent
 {
     private readonly EnhancedReActAgent _agent;
@@ -32,9 +29,9 @@ public class MyClawAgent
             .Name("MyClaw")
             .Model(model)
             .SysPrompt(systemPrompt)
-            .MaxIterations(config.Agent.MaxToolIterations);
+            .MaxIterations(config.Agent.MaxToolIterations)
+            .Verbose(config.Agent.Verbose);
 
-        // 添加 Skills 作为 Tools
         if (skillManager != null)
         {
             foreach (var skill in skillManager.LoadedSkills)
@@ -46,9 +43,6 @@ public class MyClawAgent
         _agent = builder.Build();
     }
 
-    /// <summary>
-    /// 发送消息给 Agent 并获取响应
-    /// </summary>
     public async Task<string> ChatAsync(string message, string sessionId = "default")
     {
         var msg = Msg.Builder()
@@ -61,41 +55,43 @@ public class MyClawAgent
         return response.GetTextContent() ?? "无响应";
     }
 
-    /// <summary>
-    /// 构建系统提示词
-    /// </summary>
     private string BuildSystemPrompt()
     {
         var parts = new List<string>();
 
-        // AGENTS.md
-        var agentsPath = Path.Combine(_config.Agent.Workspace, "AGENTS.md");
+        var workspace = _config.Agent.Workspace;
+
+        var agentsPath = Path.Combine(workspace, "AGENTS.md");
         if (File.Exists(agentsPath))
         {
             parts.Add(File.ReadAllText(agentsPath));
         }
 
-        // SOUL.md
-        var soulPath = Path.Combine(_config.Agent.Workspace, "SOUL.md");
+        var soulPath = Path.Combine(workspace, "SOUL.md");
         if (File.Exists(soulPath))
         {
             parts.Add(File.ReadAllText(soulPath));
         }
 
-        // Memory 上下文
+        var heartbeatPath = Path.Combine(workspace, "HEARTBEAT.md");
+        if (File.Exists(heartbeatPath))
+        {
+            parts.Add("## 心跳任务\n" + File.ReadAllText(heartbeatPath));
+        }
+
         var memoryContext = _memoryStore.GetMemoryContext();
         if (!string.IsNullOrEmpty(memoryContext))
         {
-            parts.Add(memoryContext);
+            parts.Add("## 记忆上下文\n" + memoryContext);
         }
 
-        // 默认提示词
         parts.Add(@"
 你是 MyClaw，一个个人 AI 助手。
-You are MyClaw, a personal AI assistant.
 
-你可以使用以下工具来辅助完成任务：
+你可以使用以下工具来完成任务：
 - Skills: 各种专业领域的技能助手
+- Calculator: 数学计算
+- GetTime: 获取当前时间
 
 请用中文或用户使用的语言回复。
 ");

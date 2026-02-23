@@ -1,9 +1,10 @@
 # MyClaw.NET
 
-基于 C# 和 AgentScope.NET 的个人 AI 助手 - myclaw 项目的 1:1 复刻版本。
+基于 C# 和 AgentScope.NET 的个人 AI 助手。
 
-Personal AI assistant built on [AgentScope.NET](https://github.com/linkerlin/agentscope.net) - A 1:1 replication of [myclaw](https://github.com/stellarlinkco/myclaw).
+Personal AI assistant built on [AgentScope.NET](https://github.com/linkerlin/agentscope.net).
 
+更多AI内容，请访问 [智柴网](https://zhichai.net/) 。
 ## 项目状态 Project Status
 
 🚧 **开发中 In Development**
@@ -12,10 +13,10 @@ Personal AI assistant built on [AgentScope.NET](https://github.com/linkerlin/age
 - ✅ 设计方案完成 / Design plan completed
 - ✅ 实施计划完成 / Implementation plan completed
 - ✅ Phase 1: 基础设施完成 / Phase 1: Infrastructure completed
+- ✅ Phase 2: Core Agent 完成 / Phase 2: Core Agent completed
 - ✅ Phase 3: Gateway 基础完成 / Phase 3: Gateway completed
 - ✅ Phase 5: Skills 系统完成 / Phase 5: Skills completed
 - ✅ Phase 6: Scheduling 完成 / Phase 6: Scheduling completed
-- ⏳ Phase 2: Core Agent 开发中 / Phase 2: Core Agent in progress
 
 ## 特性 Features
 
@@ -24,13 +25,15 @@ Personal AI assistant built on [AgentScope.NET](https://github.com/linkerlin/age
 - **CLI** - 完整的命令行接口 (agent, gateway, onboard, status, skills)
 - **配置系统** - JSON 配置 + 环境变量覆盖
 - **Memory 系统** - 长期记忆 (MEMORY.md) + 每日日记
+- **MCP 服务** - 基于 streamable-http 的 MCP 协议实现
 - **Gateway 基础** - MessageBus, ChannelManager, GatewayService
 - **Skills 系统** - SKILL.md 加载器 + 3 个示例 Skills
 - **Scheduling** - Cron 任务 (Quartz.NET) + Heartbeat 服务
+- **Agent 运行时** - 基于 AgentScope.NET 的 ReAct Agent (单消息 + REPL 模式)
+- **多模型支持** - Anthropic, OpenAI, DeepSeek, Gemini, DashScope, Ollama
 
 ### 计划实现 Planned
 
-- **Agent 运行时** - 等待 AgentScope.NET 集成
 - **多渠道支持** - Telegram, Feishu, WeCom, WebUI
 - **多模态** - 图像识别和文档处理
 
@@ -84,6 +87,67 @@ dotnet run --project src/MyClaw.CLI -- agent
 dotnet run --project src/MyClaw.CLI -- gateway
 ```
 
+## MCP 服务 MCP Service
+
+MyClaw 提供 MCP (Model Context Protocol) 服务，支持通过 streamable-http 协议连接。
+
+### 端点 Endpoint
+
+```
+http://localhost:2334/mcp
+```
+
+### MCP 工具 MCP Tools
+
+| 工具 | 描述 |
+|------|------|
+| `myclaw_update` | 神经重塑 - 修改核心认知文件 |
+| `myclaw_note` | 海马体写入 - 追加今日日志 |
+| `myclaw_read` | 全脑唤醒 - 读取上下文和记忆 |
+| `myclaw_archive` | 日志归档 |
+| `myclaw_entity` | 概念连接 - 管理实体知识图谱 |
+| `myclaw_exec` | 感官与手 - 安全执行终端命令 |
+| `myclaw_status` | 系统诊断 |
+
+### MCP 提示词 MCP Prompts
+
+| 提示词 | 描述 |
+|--------|------|
+| `myclaw_wakeup` | 唤醒并加载上下文 |
+| `myclaw_growup` | 记忆蒸馏 |
+| `myclaw_briefing` | 每日简报 |
+
+### Kimi CLI 配置 Kimi CLI Configuration
+
+在 Kimi CLI 配置文件中添加：
+
+```json
+{
+  "mcpServers": {
+    "myclaw": {
+      "type": "streamable-http",
+      "url": "http://localhost:2334/mcp"
+    }
+  }
+}
+```
+
+### Claude Desktop 配置 Claude Desktop Configuration
+
+配置文件位置：
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "myclaw": {
+      "type": "streamable-http",
+      "url": "http://localhost:2334/mcp"
+    }
+  }
+}
+
 ## 项目结构 Project Structure
 
 ```
@@ -97,7 +161,8 @@ myclaw.net/
 │   ├── MyClaw.Memory/        # 内存系统 / Memory system
 │   ├── MyClaw.Skills/        # 技能系统 / Skills system
 │   ├── MyClaw.Cron/          # 定时任务 / Cron scheduler
-│   └── MyClaw.Heartbeat/     # 心跳服务 / Heartbeat service
+│   ├── MyClaw.Heartbeat/     # 心跳服务 / Heartbeat service
+│   └── MyClaw.MCP/           # MCP 服务 / MCP service
 ├── tests/
 │   ├── MyClaw.Core.Tests/
 │   └── MyClaw.Integration.Tests/
@@ -141,9 +206,12 @@ myclaw.net/
 - [x] 日志系统集成 (Serilog)
 - [x] CLI 框架 (System.CommandLine)
 
-### Phase 2: Core Agent (Week 3-4) ⏳
+### Phase 2: Core Agent (Week 3-4) ✅
 - [x] Memory 系统集成 (长期记忆 + 每日记忆)
-- [ ] MyClawAgent 实现 (等待 AgentScope.NET)
+- [x] MyClawAgent 实现 (基于 AgentScope.NET)
+- [x] Agent CLI 命令 (单消息 + REPL 模式)
+- [x] ModelFactory 集成 (多模型支持)
+- [x] SkillTool 工具集成
 
 ### Phase 3: Gateway 基础 (Week 5-6) ✅
 - [x] MessageBus 实现 (Channel<T>)
@@ -167,7 +235,13 @@ myclaw.net/
 - [x] Cron 系统 (Quartz.NET)
 - [x] Heartbeat 服务
 
-### Phase 7: Testing & Polish (Week 15-16)
+### Phase 7: MCP Service ✅
+- [x] MCP 服务 (streamable-http)
+- [x] JSON-RPC 2.0 协议支持
+- [x] 7 个核心工具 (myclaw_*)
+- [x] 3 个提示词模板
+
+### Phase 8: Testing & Polish (Week 15-16)
 - [ ] 完整测试
 - [ ] 文档完善
 - [ ] 发布准备
@@ -191,5 +265,5 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件
 ---
 
 **Status**: 🚧 In Development  
-**Version**: 0.3.0-alpha  
-**Last Updated**: 2026-02-19
+**Version**: 0.4.0-alpha  
+**Last Updated**: 2026-02-23

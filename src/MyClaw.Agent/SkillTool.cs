@@ -3,9 +3,6 @@ using MyClaw.Skills;
 
 namespace MyClaw.Agent;
 
-/// <summary>
-/// 将 Skill 转换为 AgentScope 的 ITool
-/// </summary>
 public class SkillTool : ToolBase
 {
     private readonly Skill _skill;
@@ -20,15 +17,38 @@ public class SkillTool : ToolBase
         return new Dictionary<string, object>
         {
             ["type"] = "object",
-            ["properties"] = new Dictionary<string, object>(),
-            ["required"] = new List<string>()
+            ["properties"] = new Dictionary<string, object>
+            {
+                ["intent"] = new Dictionary<string, object>
+                {
+                    ["type"] = "string",
+                    ["description"] = "用户想要完成的任务意图，如 '计算', '搜索', '写作' 等"
+                },
+                ["query"] = new Dictionary<string, object>
+                {
+                    ["type"] = "string",
+                    ["description"] = "用户的具体查询或需求"
+                }
+            },
+            ["required"] = new List<string> { "intent", "query" }
         };
     }
 
     public override Task<ToolResult> ExecuteAsync(Dictionary<string, object> parameters)
     {
-        // Skill 作为系统提示词返回
-        var prompt = _skill.GetSystemPrompt();
-        return Task.FromResult(ToolResult.Ok(prompt));
+        var intent = parameters.TryGetValue("intent", out var i) ? i?.ToString() : null;
+        var query = parameters.TryGetValue("query", out var q) ? q?.ToString() : null;
+
+        var systemPrompt = _skill.GetSystemPrompt();
+        
+        var result = $"""
+            [Skill: {_skill.Name}]
+            [Intent: {intent}]
+            [Query: {query}]
+            
+            {systemPrompt}
+            """;
+
+        return Task.FromResult(ToolResult.Ok(result));
     }
 }

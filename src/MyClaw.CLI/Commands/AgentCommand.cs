@@ -1,5 +1,6 @@
 using System;
 using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.IO;
 using System.Threading.Tasks;
 using MyClaw.Agent;
@@ -10,9 +11,6 @@ using Spectre.Console;
 
 namespace MyClaw.CLI.Commands;
 
-/// <summary>
-/// Agent 命令 - 单次消息或 REPL 模式
-/// </summary>
 public class AgentCommand : Command
 {
     public AgentCommand() : base("agent", "在单消息或 REPL 模式下运行 Agent")
@@ -20,12 +18,28 @@ public class AgentCommand : Command
         var messageOption = new Option<string?>(
             aliases: new[] { "-m", "--message" },
             description: "发送给 Agent 的单条消息");
+            
+        var modelOption = new Option<string>(
+            aliases: new[] { "--model", "-M" },
+            description: "指定使用的模型",
+            getDefaultValue: () => "anthropic");
+            
+        var replOption = new Option<bool>(
+            aliases: new[] { "--repl", "-r" },
+            description: "强制使用 REPL 模式");
 
         AddOption(messageOption);
+        AddOption(modelOption);
+        AddOption(replOption);
 
-        this.SetHandler(async (string? message) =>
+        this.SetHandler(async (string? message, string model, bool repl) =>
         {
             var cfg = ConfigurationLoader.Load();
+            
+            if (!string.IsNullOrEmpty(model))
+            {
+                cfg.Provider.Type = model;
+            }
             
             if (string.IsNullOrEmpty(cfg.Provider.ApiKey))
             {
@@ -33,26 +47,22 @@ public class AgentCommand : Command
                 return;
             }
 
-            // 初始化依赖
             var memoryStore = new MemoryStore(cfg.Agent.Workspace);
             var skillManager = new SkillManager(cfg.Agent.Workspace);
             skillManager.LoadSkills();
 
-            // 创建 Agent
-            var model = ModelFactory.Create(cfg.Provider);
-            var agent = new MyClawAgent(cfg, model, memoryStore, skillManager);
+            var modelInstance = ModelFactory.Create(cfg.Provider);
+            var agent = new MyClawAgent(cfg, modelInstance, memoryStore, skillManager);
 
-            if (!string.IsNullOrEmpty(message))
+            if (!string.IsNullOrEmpty(message) && !repl)
             {
-                // 单消息模式
                 await RunSingleMessageAsync(agent, message);
             }
             else
             {
-                // REPL 模式
                 await RunReplAsync(agent);
             }
-        }, messageOption);
+        }, messageOption, modelOption, replOption);
     }
 
     private async Task RunSingleMessageAsync(MyClawAgent agent, string message)
@@ -64,12 +74,12 @@ public class AgentCommand : Command
                 response = await agent.ChatAsync(message);
             });
 
-            AnsiConsole.MarkupLine($"[green]助手:[/] {response}");
+        AnsiConsole.MarkupLine($"[green]助手:[/] {response}");
     }
 
     private async Task RunReplAsync(MyClawAgent agent)
     {
-        AnsiConsole.MarkupLine("[blue]myclaw agent (输入 'exit' 退出)[/]");
+        AnsiConsole.MarkupLine("[blue]myclaw agent (输入 'exit' 或 '/quit' 退出)[/]");
         
         while (true)
         {
@@ -78,7 +88,7 @@ public class AgentCommand : Command
             if (string.IsNullOrWhiteSpace(input))
                 continue;
 
-            if (input.ToLower() is "exit" or "quit")
+            if (input.ToLower() is "exit" or "quit" or "/quit")
                 break;
 
             string response = "";
@@ -88,7 +98,7 @@ public class AgentCommand : Command
                     response = await agent.ChatAsync(input);
                 });
 
-        AnsiConsole.MarkupLine($"[green]助手:[/] {response}");
+            AnsiConsole.MarkupLine($"[green]助手:[/] {response}");
         }
     }
 }
